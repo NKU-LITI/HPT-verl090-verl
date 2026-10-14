@@ -328,6 +328,7 @@ if [ "${NODE_RANK}" = "0" ]; then
                 +hpt.off_policy_beta=$OFF_POLICY_BETA \
                 +hpt.max_grad_norm=$MAX_GRAD_NORM \
                 trainer.balance_batch=True \
+                trainer.use_v1=False \
                 trainer.logger='["console","tensorboard"]' \
                 trainer.project_name=${PROJECT_NAME} \
                 trainer.experiment_name=${EXPERIMENT_NAME} \

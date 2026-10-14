@@ -181,6 +181,13 @@ def main(config):
         use_critic=need_critic(config),
     )
 
+    hpt_config = config.get("hpt", None)
+    if hpt_config is not None and hpt_config.get("enabled", False) and config.trainer.use_v1:
+        raise ValueError(
+            "HPT is implemented by the legacy PPO trainer; set trainer.use_v1=False. "
+            "The V1 trainer does not call apply_hpt(), so it cannot create hpt_sft_mask."
+        )
+
     if config.trainer.use_v1:
         run_ppo(config, task_runner_class=TaskRunnerV1)
     else:
