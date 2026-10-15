@@ -1,0 +1,61 @@
+raceback (most recent call last):
+2026-10-14T19:42:57.861434301+08:00   File "<frozen runpy>", line 198, in _run_module_as_main
+2026-10-14T19:42:57.861652780+08:00   File "<frozen runpy>", line 88, in _run_code
+2026-10-14T19:42:57.861668420+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo.py", line 204, in <module>
+2026-10-14T19:42:57.865480261+08:00     main()
+2026-10-14T19:42:57.865606990+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+2026-10-14T19:42:57.865724430+08:00     _run_hydra(
+2026-10-14T19:42:57.865917920+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+2026-10-14T19:42:57.865927370+08:00     _run_app(
+2026-10-14T19:42:57.866115969+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+2026-10-14T19:42:57.866143249+08:00     run_and_report(
+2026-10-14T19:42:57.866147279+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+2026-10-14T19:42:57.866345019+08:00     raise ex
+2026-10-14T19:42:57.866351359+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+2026-10-14T19:42:57.866362029+08:00     return func()
+2026-10-14T19:42:57.866370269+08:00            ^^^^^^
+2026-10-14T19:42:57.866373299+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+2026-10-14T19:42:57.866531368+08:00     lambda: hydra.run(
+2026-10-14T19:42:57.866536558+08:00             ^^^^^^^^^^
+2026-10-14T19:42:57.866539368+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 132, in run
+2026-10-14T19:42:57.866636578+08:00     _ = ret.return_value
+2026-10-14T19:42:57.866661918+08:00         ^^^^^^^^^^^^^^^^
+2026-10-14T19:42:57.866677168+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/core/utils.py", line 263, in return_value
+2026-10-14T19:42:57.866854667+08:00     raise self._return_value
+2026-10-14T19:42:57.866871157+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/core/utils.py", line 189, in run_job
+2026-10-14T19:42:57.866979557+08:00     ret.return_value = task_function(task_cfg)
+2026-10-14T19:42:57.866983207+08:00                        ^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-14T19:42:57.866986587+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo.py", line 200, in main
+2026-10-14T19:42:57.870875758+08:00     run_ppo(config, task_runner_class=TaskRunner)
+2026-10-14T19:42:57.871124707+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo.py", line 94, in run_ppo
+2026-10-14T19:42:57.874914618+08:00     ray.get(runner.run.remote(config))
+2026-10-14T19:42:57.875056577+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 22, in auto_init_wrapper
+2026-10-14T19:42:57.875190327+08:00     return fn(*args, **kwargs)
+2026-10-14T19:42:57.875317347+08:00            ^^^^^^^^^^^^^^^^^^^
+2026-10-14T19:42:57.875338527+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 134, in wrapper
+2026-10-14T19:42:57.875351807+08:00     return func(*args, **kwargs)
+2026-10-14T19:42:57.875355367+08:00            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-14T19:42:57.875358337+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/worker.py", line 2986, in get
+2026-10-14T19:42:57.876122885+08:00     values, debugger_breakpoint = worker.get_objects(
+2026-10-14T19:42:57.876132905+08:00                                   ^^^^^^^^^^^^^^^^^^^
+2026-10-14T19:42:57.876136625+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/worker.py", line 1050, in get_objects
+2026-10-14T19:42:57.876450784+08:00     raise value.as_instanceof_cause()
+2026-10-14T19:42:57.876627594+08:00 ray.exceptions.RayTaskError(NotImplementedError): [36mray::TaskRunner.run()[39m (pid=796, ip=172.16.1.254, actor_id=06916032adfba3166a826d8f01000000, repr=<verl.trainer.main_ppo_v0.TaskRunner object at 0xfffe10f35850>)
+2026-10-14T19:42:57.876633934+08:00            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-14T19:42:57.876637134+08:00            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-14T19:42:57.876640344+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo_v0.py", line 234, in run
+2026-10-14T19:42:57.876643344+08:00     trainer.fit()
+2026-10-14T19:42:57.876645834+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/ppo/ray_trainer.py", line 1698, in fit
+2026-10-14T19:42:57.876648394+08:00     batch, reward_tensor, hpt_metrics = apply_hpt(
+2026-10-14T19:42:57.876651124+08:00                                         ^^^^^^^^^^
+2026-10-14T19:42:57.876653654+08:00   File "/opt/huawei/schedule-train/algorithm/verl/experimental/hpt/algorithm.py", line 291, in apply_hpt
+2026-10-14T19:42:57.876656254+08:00     _replace_with_target(selected, row, tokenizer)
+2026-10-14T19:42:57.876658974+08:00   File "/opt/huawei/schedule-train/algorithm/verl/experimental/hpt/algorithm.py", line 162, in _replace_with_target
+2026-10-14T19:42:57.876661494+08:00     raise NotImplementedError("HPT currently supports text-only rollouts; multimodal position_ids were found")
+2026-10-14T19:42:57.876664004+08:00 NotImplementedError: HPT currently supports text-only rollouts; multimodal position_ids were found
+2026-10-14T19:42:58.451793755+08:00 [ERROR] 2026-10-14-19:42:57 (PID:1912, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+2026-10-14T19:43:01.669067339+08:00 + python_exit_code=1
+2026-10-14T19:43:01.669143869+08:00 + '[' 1 -ne 0 ']'
+2026-10-14T19:43:01.669196009+08:00 + echo 'Training failed with exit code 1....'
+2026-10-14T19:43:01.669201139+08:00 Training failed with exit code 1....
+2026-10-14T19:43:01.669204219+08:00 + sleep 30h
