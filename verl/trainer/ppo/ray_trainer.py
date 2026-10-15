@@ -22,7 +22,9 @@ import json
 import os
 import uuid
 from collections import defaultdict
+from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
+from numbers import Real
 from pprint import pprint
 from typing import Any, Optional
 
@@ -205,14 +207,50 @@ def _global_ppo_mini_batch_size(configured_size: int, rollout_n: int) -> int:
     return global_size
 
 
-def _hpt_legacy_gradient_accumulation(actor_config) -> int:
+def _mean_worker_metric(metrics: Any, key: str) -> float:
+    """Read one scalar metric from either a worker dict or collected worker list."""
+    values: list[float] = []
+
+    def collect(value: Any) -> None:
+        if isinstance(value, Mapping):
+            if key not in value:
+                raise KeyError(f"worker metrics do not contain {key!r}: {sorted(value)}")
+            collect(value[key])
+        elif isinstance(value, torch.Tensor):
+            values.extend(value.detach().float().cpu().reshape(-1).tolist())
+        elif isinstance(value, np.ndarray):
+            values.extend(value.astype(float, copy=False).reshape(-1).tolist())
+        elif isinstance(value, list | tuple):
+            for item in value:
+                collect(item)
+        elif isinstance(value, (Real, np.number)):
+            values.append(float(value))
+        else:
+            raise TypeError(f"unsupported {key!r} metric value type: {type(value)!r}")
+
+    collect(metrics)
+    if not values:
+        raise ValueError(f"worker metric {key!r} has no scalar values")
+    return float(np.mean(values))
+
+
+def _hpt_legacy_gradient_accumulation(actor_config, *, dp_size: int, rollout_n: int) -> int:
     """Recover the fixed loss denominator used by the verl 0.1 HPT actor."""
     from verl.experimental.hpt.actor_update import legacy_gradient_accumulation
 
     micro_batch_size = actor_config.get("ppo_micro_batch_size", None)
-    if micro_batch_size is None:
-        raise ValueError("HPT compatibility requires actor.ppo_micro_batch_size")
-    return legacy_gradient_accumulation(actor_config.ppo_mini_batch_size, micro_batch_size)
+    mini_batch_size = actor_config.get("ppo_mini_batch_size")
+    if micro_batch_size is not None:
+        return legacy_gradient_accumulation(mini_batch_size, micro_batch_size)
+
+    micro_batch_size_per_gpu = actor_config.get("ppo_micro_batch_size_per_gpu", None)
+    if micro_batch_size_per_gpu is None:
+        raise ValueError(
+            "HPT compatibility requires actor.ppo_micro_batch_size or actor.ppo_micro_batch_size_per_gpu"
+        )
+    global_mini_batch_size = mini_batch_size * rollout_n
+    global_micro_batch_size = micro_batch_size_per_gpu * dp_size
+    return legacy_gradient_accumulation(global_mini_batch_size, global_micro_batch_size)
 
 
 def compute_spec_decode_metrics(
@@ -1395,7 +1433,7 @@ class RayPPOTrainer:
         routed_experts = tu.get(output, "routed_experts")
         sum_pi_squared = tu.get(output, "sum_pi_squared") if calculate_sum_pi_squared else None
 
-        old_log_prob_mfu = tu.get(output, "metrics")["mfu"]
+        old_log_prob_mfu = _mean_worker_metric(tu.get(output, "metrics"), "mfu")
         # step 4. No padding to padding
         entropy = no_padding_2_padding(entropy, batch_td)
         log_probs = no_padding_2_padding(log_probs, batch_td)
@@ -1442,9 +1480,15 @@ class RayPPOTrainer:
         )
         hpt_config = self.config.get("hpt", None)
         hpt_enabled = hpt_config is not None and hpt_config.get("enabled", False)
-        hpt_gradient_accumulation = (
-            _hpt_legacy_gradient_accumulation(self.config.actor_rollout_ref.actor) if hpt_enabled else None
-        )
+        if hpt_enabled:
+            actor_dp_size = self._get_dp_size(self.actor_rollout_wg, "actor")
+            hpt_gradient_accumulation = _hpt_legacy_gradient_accumulation(
+                self.config.actor_rollout_ref.actor,
+                dp_size=actor_dp_size,
+                rollout_n=self.config.actor_rollout_ref.rollout.n,
+            )
+        else:
+            hpt_gradient_accumulation = None
         hpt_max_grad_norm = hpt_config.get("max_grad_norm", 80.0) if hpt_enabled else None
         ppo_epochs = self.config.actor_rollout_ref.actor.ppo_epochs
         seed = self.config.actor_rollout_ref.actor.data_loader_seed
@@ -1460,7 +1504,10 @@ class RayPPOTrainer:
             seed=seed,
             dataloader_kwargs={"shuffle": shuffle},
             compute_loss=True,
-            valid_mask_key="hpt_valid_mask" if hpt_enabled else None,
+            # Keep controller padding on every DP rank so all ranks execute the
+            # same number of collectives.  The HPT loss consumes
+            # hpt_valid_mask and gives these rows zero loss.
+            valid_mask_key=None,
             allow_partial_mini_batch=hpt_enabled,
             hpt_legacy_dynamic_batching=hpt_enabled,
             hpt_legacy_gradient_accumulation=hpt_gradient_accumulation,
