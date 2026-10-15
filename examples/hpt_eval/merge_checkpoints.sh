@@ -1,22 +1,37 @@
-#!/usr/bin/env bash
+#!/bin/bash
+set -ex
 
-# Convert the SFT/DFT/GRPO sharded checkpoints produced by this repository to
-# HuggingFace directories accepted by run_table2_mtp.sh.
+PROXY_ADDR="http://10.31.196.119:80"
+export no_proxy="${no_proxy:+$no_proxy,}10.44.***.***"
+export http_proxy="$PROXY_ADDR"
+export https_proxy="$PROXY_ADDR"
+export ftp_proxy="$PROXY_ADDR"
+export HTTP_PROXY="$PROXY_ADDR"
+export HTTP_PROXY="$PROXY_ADDR"
+export FTP_PROXY="$PROXY_ADDR"
 
-set -euo pipefail
 
-BASE_PATH=${BASE_PATH:-${zlt_data:?zlt_data is not set}}
-SFT_CKPT=${SFT_CKPT:?set SFT_CKPT to an SFT global_step_* directory}
-DFT_CKPT=${DFT_CKPT:?set DFT_CKPT to a DFT global_step_* directory}
-GRPO_CKPT=${GRPO_CKPT:?set GRPO_CKPT to a GRPO global_step_* directory or its actor directory}
+# pip uninstall transformers -y
+# # pip install transformers
+# pip install "transformers>=4.51.0"
+# # cd ${PROJECT_ROOT}/transformers
+# pip install transformers -i https://pypi.tuna.tsinghua.edu.cn/simple
+pip install transformers==5.10.4 -i https://pypi.tuna.tsinghua.edu.cn/simple
+pip install --upgrade accelerate -i https://pypi.tuna.tsinghua.edu.cn/simple
+pip install aiohttp aiofiles math-verify -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+BASE_PATH=${zlt_data}
+SFT_CKPT=${SFT_CKPT:-${zlt_data}/runs/sft/qwen35_35b_0922/checkpoint/global_step_885}
+DFT_CKPT=${DFT_CKPT:-${zlt_data}/runs/dft/qwen35_35b_0922/checkpoint/global_step_885}
+# GRPO_CKPT=${GRPO_CKPT:?set GRPO_CKPT to a GRPO global_step_* directory or its actor directory}
 SFT_BACKEND=${SFT_BACKEND:-fsdp}
 DFT_BACKEND=${DFT_BACKEND:-fsdp}
-GRPO_BACKEND=${GRPO_BACKEND:-fsdp}
-MERGED_ROOT=${MERGED_ROOT:-${BASE_PATH}/eval_models}
+# GRPO_BACKEND=${GRPO_BACKEND:-fsdp}
+# MERGED_ROOT=${MERGED_ROOT:-${BASE_PATH}/runs/eval_models}
 
-SFT_MODEL_PATH=${SFT_MODEL_PATH:-${MERGED_ROOT}/qwen35b_sft_hf}
-DFT_MODEL_PATH=${DFT_MODEL_PATH:-${MERGED_ROOT}/qwen35b_dft_hf}
-GRPO_MODEL_PATH=${GRPO_MODEL_PATH:-${MERGED_ROOT}/qwen35b_grpo_hf}
+SFT_MODEL_PATH=${SFT_MODEL_PATH:-${BASE_PATH}/runs/sft/qwen35_35b_0922/qwen35b_sft_hf}
+DFT_MODEL_PATH=${DFT_MODEL_PATH:-${BASE_PATH}/runs/dft/qwen35_35b_0922/qwen35b_dft_hf}
+# GRPO_MODEL_PATH=${GRPO_MODEL_PATH:-${MERGED_ROOT}/qwen35b_grpo_hf}
 
 resolve_grpo_actor() {
     local path=$1
@@ -48,11 +63,11 @@ merge_one() {
         --trust-remote-code
 }
 
-mkdir -p "${MERGED_ROOT}"
+# mkdir -p "${MERGED_ROOT}"
 merge_one SFT "${SFT_BACKEND}" "${SFT_CKPT}" "${SFT_MODEL_PATH}"
 merge_one DFT "${DFT_BACKEND}" "${DFT_CKPT}" "${DFT_MODEL_PATH}"
-GRPO_ACTOR_CKPT=$(resolve_grpo_actor "${GRPO_CKPT}")
-merge_one GRPO "${GRPO_BACKEND}" "${GRPO_ACTOR_CKPT}" "${GRPO_MODEL_PATH}"
+# GRPO_ACTOR_CKPT=$(resolve_grpo_actor "${GRPO_CKPT}")
+# merge_one GRPO "${GRPO_BACKEND}" "${GRPO_ACTOR_CKPT}" "${GRPO_MODEL_PATH}"
 
 printf 'Merged model paths:\nSFT_MODEL_PATH=%s\nDFT_MODEL_PATH=%s\nGRPO_MODEL_PATH=%s\n' \
-    "${SFT_MODEL_PATH}" "${DFT_MODEL_PATH}" "${GRPO_MODEL_PATH}"
+    "${SFT_MODEL_PATH}" "${DFT_MODEL_PATH}" # "${GRPO_MODEL_PATH}"

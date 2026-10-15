@@ -14,6 +14,15 @@
 set -euo pipefail
 set -x
 
+PROXY_ADDR="http://10.31.196.119:80"
+export no_proxy="${no_proxy:+$no_proxy,}10.44.***.***"
+export http_proxy="$PROXY_ADDR"
+export https_proxy="$PROXY_ADDR"
+export ftp_proxy="$PROXY_ADDR"
+export HTTP_PROXY="$PROXY_ADDR"
+export HTTP_PROXY="$PROXY_ADDR"
+export FTP_PROXY="$PROXY_ADDR"
+
 DATE_TAG=$(date +%Y%m%d_%H%M%S)
 ROOT_PATH=${ROOT_PATH:-/opt/huawei}
 PROJECT_ROOT=${PROJECT_ROOT:-/cache/algorithm}
@@ -25,8 +34,10 @@ if [[ "$(pwd -P)" != "${PROJECT_ROOT}" ]]; then
 fi
 cd "${PROJECT_ROOT}"
 
+set +u
 source /home/ma-user/Ascend/cann-8.5.2/set_env.sh
 source /home/ma-user/Ascend/nnal/atb/set_env.sh
+set -u
 
 export NON_MEGATRON=true
 export MULTI_STREAM_MEMORY_REUSE=2
@@ -46,14 +57,14 @@ export TOKENIZERS_PARALLELISM=false
 export HYDRA_FULL_ERROR=1
 export VLLM_RPC_TIMEOUT=600000
 
-BASE_PATH=${BASE_PATH:-${zlt_data:?zlt_data is not set on this MTP job}}
+BASE_PATH=${zlt_data}
 DATA_DIR=${DATA_DIR:-${BASE_PATH}/HPT_data}
-OUTPUT_ROOT=${OUTPUT_ROOT:-${BASE_PATH}/evaluation/HPT_table2_${DATE_TAG}}
+OUTPUT_ROOT=${OUTPUT_ROOT:-${BASE_PATH}/runs/eval_result/HPT_table2_${DATE_TAG}}
 
 # Fine-tuned checkpoints must be merged to HuggingFace format before rollout.
-SFT_MODEL_PATH=${SFT_MODEL_PATH:-${BASE_PATH}/eval_models/qwen35b_sft_hf}
-DFT_MODEL_PATH=${DFT_MODEL_PATH:-${BASE_PATH}/eval_models/qwen35b_dft_hf}
-GRPO_MODEL_PATH=${GRPO_MODEL_PATH:-${BASE_PATH}/eval_models/qwen35b_grpo_hf}
+SFT_MODEL_PATH=${SFT_MODEL_PATH:-${BASE_PATH}/runs/sft/qwen35_35b_0922/qwen35b_sft_hf}
+# DFT_MODEL_PATH=${DFT_MODEL_PATH:-${BASE_PATH}/runs/dft/qwen35_35b_0922/qwen35b_sft_hf}
+# GRPO_MODEL_PATH=${GRPO_MODEL_PATH:-${BASE_PATH}/eval_models/qwen35b_grpo_hf}
 HPT_MODEL_PATH=${HPT_MODEL_PATH:-}
 
 # Defaults follow zlt_run_grpo_qwen35b_v3.sh and its commented validation set.
@@ -236,8 +247,8 @@ if [[ "${NODE_RANK}" == "0" ]]; then
     ray status
     export RAY_ADDRESS="${MA_CURRENT_IP}:${MASTER_PORT}"
 
-    STAGES=(SFT DFT GRPO)
-    MODEL_PATHS=("${SFT_MODEL_PATH}" "${DFT_MODEL_PATH}" "${GRPO_MODEL_PATH}")
+    STAGES=(SFT) # DFT) # GRPO)
+    MODEL_PATHS=("${SFT_MODEL_PATH}") # "${DFT_MODEL_PATH}") # "${GRPO_MODEL_PATH}")
     if [[ -n "${HPT_MODEL_PATH}" ]]; then
         STAGES+=(HPT)
         MODEL_PATHS+=("${HPT_MODEL_PATH}")

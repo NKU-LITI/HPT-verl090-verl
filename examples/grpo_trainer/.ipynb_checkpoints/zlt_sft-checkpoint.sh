@@ -127,7 +127,7 @@ mkdir -p ${TENSORBOARD_DIR}
 
 echo "LOG_PATH resolved to: ${LOG_DIR}"
 
-TOTAL_EPOCHS=${TOTAL_EPOCHS:-5}
+TOTAL_EPOCHS=${TOTAL_EPOCHS:-1}
 SAVE_FREQ=${SAVE_FREQ:-20}
 VAL_FREQ=${VAL_FREQ:-10}
 
@@ -213,7 +213,7 @@ python3 -m torch.distributed.run \
     trainer.n_gpus_per_node=$NPROC_PER_NODE \
     trainer.save_freq=after_each_epoch \
     trainer.test_freq=$TEST_FREQ \
-    trainer.max_ckpt_to_keep=2 \
+    trainer.max_ckpt_to_keep=0 \
     trainer.default_local_dir=${SAVE_DIR} \
     trainer.resume_mode=auto 2>&1 | tee -a ${LOG_DIR}/${LOSS_TYPE}_${NODE_RANK}.log
 
