@@ -27,6 +27,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "true"
 # os.environ['TORCH_COMPILE_DISABLE'] = '1'
 
 import asyncio
+import itertools
 from pprint import pprint
 
 import pandas as pd
@@ -73,6 +74,7 @@ async def submit_request(server_address, **chat_complete_request):
             headers={"Authorization": "Bearer token-abc123", **extra_headers},
             json=chat_complete_request,
         ) as resp:
+            resp.raise_for_status()
             data = await resp.json()
             return ChatCompletion(**data)
     finally:
@@ -150,6 +152,11 @@ def main(config):
     datasets = []
     for train_file in train_files:
         dataset = pd.read_parquet(train_file)
+        # Preserve dataset identity after concatenation.  HPT Table 2 contains
+        # several datasets that may share the same generic ``data_source``
+        # value (for example ``math``), so the source path is needed to report
+        # the correct benchmark column.
+        dataset["__source_file__"] = str(train_file)
         datasets.append(dataset)
 
     # concat dataset
@@ -167,20 +174,43 @@ def main(config):
     )
 
     # reshape results into a numpy array
-    import itertools
-
     results = list(itertools.chain.from_iterable(gen_results))
 
-    # extract content from results
-    results = np.array([result.choices[0].message.content for result in results])
-    results = np.reshape(results, (-1, n_samples))
+    # Keep exact server-side token counts and finish reasons.  Retokenizing the
+    # decoded text loses special tokens and cannot reliably identify responses
+    # stopped by the generation limit, which makes evaluation token/truncation
+    # statistics inaccurate.
+    response_texts = np.array([result.choices[0].message.content or "" for result in results], dtype=object)
+    finish_reasons = np.array([result.choices[0].finish_reason for result in results], dtype=object)
+    prompt_token_counts = np.array(
+        [result.usage.prompt_tokens if result.usage is not None else None for result in results], dtype=object
+    )
+    response_token_counts = np.array(
+        [result.usage.completion_tokens if result.usage is not None else None for result in results], dtype=object
+    )
+    total_token_counts = np.array(
+        [result.usage.total_tokens if result.usage is not None else None for result in results], dtype=object
+    )
 
-    assert results.shape == (len(chat_lst), n_samples)
+    response_texts = np.reshape(response_texts, (-1, n_samples))
+    finish_reasons = np.reshape(finish_reasons, (-1, n_samples))
+    prompt_token_counts = np.reshape(prompt_token_counts, (-1, n_samples))
+    response_token_counts = np.reshape(response_token_counts, (-1, n_samples))
+    total_token_counts = np.reshape(total_token_counts, (-1, n_samples))
 
-    results = results.tolist()
+    assert response_texts.shape == (len(chat_lst), n_samples)
 
-    # add to the data frame
-    dataset["responses"] = results
+    # Add rollout content and metadata to the original rows.  All sample-level
+    # fields use the same [row][sample] layout so downstream evaluation can
+    # explode them without guessing alignment.
+    dataset["responses"] = response_texts.tolist()
+    dataset["finish_reasons"] = finish_reasons.tolist()
+    dataset["prompt_token_counts"] = prompt_token_counts.tolist()
+    dataset["response_token_counts"] = response_token_counts.tolist()
+    dataset["total_token_counts"] = total_token_counts.tolist()
+    dataset["generation_max_tokens"] = int(config.actor_rollout_ref.rollout.response_length)
+    dataset["generation_temperature"] = float(config.actor_rollout_ref.rollout.temperature)
+    dataset["generation_top_p"] = float(config.actor_rollout_ref.rollout.top_p)
 
     # write to a new parquet
     output_dir = os.path.dirname(config.data.output_path)

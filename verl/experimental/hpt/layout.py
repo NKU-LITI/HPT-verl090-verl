@@ -8,12 +8,21 @@
 
 """Canonical verl 0.1 HPT batch-layout compatibility helpers."""
 
+import math
+
 import torch
 
 from verl import DataProto
 from verl.utils.seqlen_balancing import get_seqlen_balanced_partitions
 
 HPT_LEGACY_PADDING_DIVISOR = 8
+
+
+def get_hpt_padding_divisor(dp_size: int) -> int:
+    """Preserve legacy 8-way padding while satisfying current DP dispatch."""
+    if dp_size <= 0:
+        raise ValueError(f"data-parallel size must be positive, got {dp_size}")
+    return math.lcm(HPT_LEGACY_PADDING_DIVISOR, dp_size)
 
 
 def pad_hpt_batch_like_reference(

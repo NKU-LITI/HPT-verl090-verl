@@ -1709,13 +1709,14 @@ class RayPPOTrainer:
                         # rollout batch and cannot be aligned after HPT routing.
                         reward_extra_infos_dict = {}
                         from verl.experimental.hpt.layout import (
-                            HPT_LEGACY_PADDING_DIVISOR,
+                            get_hpt_padding_divisor,
                             pad_hpt_batch_like_reference,
                         )
 
+                        hpt_padding_divisor = get_hpt_padding_divisor(actor_dp_size)
                         batch, hpt_inference_pad_size = pad_hpt_batch_like_reference(
                             batch,
-                            HPT_LEGACY_PADDING_DIVISOR,
+                            hpt_padding_divisor,
                             mark_actor_padding=False,
                         )
                         reward_tensor = batch.batch["token_level_scores"]
@@ -1837,14 +1838,11 @@ class RayPPOTrainer:
                         )
 
                     if hpt_enabled:
-                        from verl.experimental.hpt.layout import (
-                            HPT_LEGACY_PADDING_DIVISOR,
-                            pad_hpt_batch_like_reference,
-                        )
+                        from verl.experimental.hpt.layout import pad_hpt_batch_like_reference
 
                         batch, final_hpt_pad_size = pad_hpt_batch_like_reference(
                             batch,
-                            HPT_LEGACY_PADDING_DIVISOR,
+                            hpt_padding_divisor,
                             mark_actor_padding=True,
                         )
                         metrics["hpt/padded_sequences"] = float(final_hpt_pad_size)

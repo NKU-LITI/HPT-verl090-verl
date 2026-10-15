@@ -93,7 +93,7 @@ DATA_DIR=${DATA_DIR:-"${BASE_PATH}/HPT_data"}
 TRAIN_FILE=${TRAIN_FILE:-"${BASE_PATH}/xyi_data/xyi_2_16_1013.parquet"} # xyi.parquet # math_problem_no_length_overflow
 
 TEST_FILE=${TEST_FILE:-["${DATA_DIR}/AIME24/test.parquet","${DATA_DIR}/AMC23/test.parquet"]}
-# TEST_FILE=${TEST_FILE:-["${DATA_DIR}/MATH-500/test.parquet"]}
+# TEST_FILE=${TEST_FILE:-["${DATA_DIR}/MATH-500/test.parquet", "${DATA_DIR}/AIME25/test.parquet", "${DATA_DIR}/Olympiad/test.parquet"]}
 
 
 pip install "accelerate>=1.6.0" -i https://pypi.tuna.tsinghua.edu.cn/simple
