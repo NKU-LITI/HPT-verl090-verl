@@ -1,0 +1,54 @@
+2026-10-15T13:00:48.190497267+08:00 Traceback (most recent call last):
+2026-10-15T13:00:48.190530588+08:00   File "<frozen runpy>", line 198, in _run_module_as_main
+2026-10-15T13:00:48.190534908+08:00   File "<frozen runpy>", line 88, in _run_code
+2026-10-15T13:00:48.190660649+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo.py", line 204, in <module>
+2026-10-15T13:00:48.194818615+08:00     main()
+2026-10-15T13:00:48.194859585+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+2026-10-15T13:00:48.195048437+08:00     _run_hydra(
+2026-10-15T13:00:48.195060967+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+2026-10-15T13:00:48.195219338+08:00     _run_app(
+2026-10-15T13:00:48.195357369+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+2026-10-15T13:00:48.195472449+08:00     run_and_report(
+2026-10-15T13:00:48.195476879+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+2026-10-15T13:00:48.195581870+08:00     raise ex
+2026-10-15T13:00:48.195604790+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+2026-10-15T13:00:48.195720451+08:00     return func()
+2026-10-15T13:00:48.195743191+08:00            ^^^^^^
+2026-10-15T13:00:48.195746851+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+2026-10-15T13:00:48.195937312+08:00     lambda: hydra.run(
+2026-10-15T13:00:48.196000293+08:00             ^^^^^^^^^^
+2026-10-15T13:00:48.196006303+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 132, in run
+2026-10-15T13:00:48.196112603+08:00     _ = ret.return_value
+2026-10-15T13:00:48.196136094+08:00         ^^^^^^^^^^^^^^^^
+2026-10-15T13:00:48.196146924+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/core/utils.py", line 263, in return_value
+2026-10-15T13:00:48.196207134+08:00     raise self._return_value
+2026-10-15T13:00:48.196332005+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/core/utils.py", line 189, in run_job
+2026-10-15T13:00:48.196354305+08:00     ret.return_value = task_function(task_cfg)
+2026-10-15T13:00:48.196372115+08:00                        ^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T13:00:48.196380165+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo.py", line 200, in main
+2026-10-15T13:00:48.200999135+08:00     run_ppo(config, task_runner_class=TaskRunner)
+2026-10-15T13:00:48.201137576+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo.py", line 94, in run_ppo
+2026-10-15T13:00:48.205162351+08:00     ray.get(runner.run.remote(config))
+2026-10-15T13:00:48.205385153+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 22, in auto_init_wrapper
+2026-10-15T13:00:48.205398863+08:00     return fn(*args, **kwargs)
+2026-10-15T13:00:48.205419083+08:00            ^^^^^^^^^^^^^^^^^^^
+2026-10-15T13:00:48.205613074+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 134, in wrapper
+2026-10-15T13:00:48.205630674+08:00     return func(*args, **kwargs)
+2026-10-15T13:00:48.205635454+08:00            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T13:00:48.205650564+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/worker.py", line 2986, in get
+2026-10-15T13:00:48.206420969+08:00     values, debugger_breakpoint = worker.get_objects(
+2026-10-15T13:00:48.206438040+08:00                                   ^^^^^^^^^^^^^^^^^^^
+2026-10-15T13:00:48.206442200+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/worker.py", line 1050, in get_objects
+2026-10-15T13:00:48.206744751+08:00     raise value.as_instanceof_cause()
+2026-10-15T13:00:48.206862272+08:00 ray.exceptions.RayTaskError(TypeError): [36mray::TaskRunner.run()[39m (pid=798, ip=172.16.225.57, actor_id=ca20efe30885224080c696a801000000, repr=<verl.trainer.main_ppo_v0.TaskRunner object at 0xffcdba22c2d0>)
+2026-10-15T13:00:48.206871002+08:00            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T13:00:48.206873962+08:00            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T13:00:48.206877382+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo_v0.py", line 234, in run
+2026-10-15T13:00:48.206881102+08:00     trainer.fit()
+2026-10-15T13:00:48.206884192+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/ppo/ray_trainer.py", line 1743, in fit
+2026-10-15T13:00:48.206887362+08:00     old_log_prob, old_log_prob_mfu = self._compute_old_log_prob(batch)
+2026-10-15T13:00:48.206890522+08:00                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T13:00:48.206894182+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/ppo/ray_trainer.py", line 1398, in _compute_old_log_prob
+2026-10-15T13:00:48.206897452+08:00     old_log_prob_mfu = tu.get(output, "metrics")["mfu"]
+2026-10-15T13:00:48.206900052+08:00                        ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+2026-10-15T13:00:48.206902752+08:00 TypeError: list indices must be integers or slices, not str
