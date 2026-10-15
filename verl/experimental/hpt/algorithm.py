@@ -158,8 +158,17 @@ def _tokenize_target(tokenizer, target: str, response_width: int) -> tuple[torch
 
 def _replace_with_target(batch: DataProto, row: int, tokenizer) -> None:
     """Replace one rollout in-place with its supervised target (text-only)."""
-    if batch.batch["position_ids"].ndim != 2:
-        raise NotImplementedError("HPT currently supports text-only rollouts; multimodal position_ids were found")
+    position_ids = batch.batch["position_ids"]
+    if position_ids.ndim not in (2, 3):
+        raise NotImplementedError(
+            f"HPT expected 2D or 3D position_ids for text-only rollouts, got shape {tuple(position_ids.shape)}"
+        )
+    if position_ids.ndim == 3:
+        valid_positions = position_ids[row, :, batch.batch["attention_mask"][row].bool()]
+        if valid_positions.numel() and not torch.equal(
+            valid_positions, valid_positions[:1].expand_as(valid_positions)
+        ):
+            raise NotImplementedError("HPT target replacement does not support rollouts with multimodal RoPE axes")
 
     target = batch.non_tensor_batch["hpt_target"][row]
     response_width = batch.batch["responses"].shape[-1]
@@ -174,7 +183,17 @@ def _replace_with_target(batch: DataProto, row: int, tokenizer) -> None:
     attention_mask = torch.cat([prompt_mask, response_mask.to(prompt_mask.dtype)])
     batch.batch["attention_mask"][row] = attention_mask
     batch.batch["input_ids"][row] = torch.cat([batch.batch["prompts"][row], response])
-    batch.batch["position_ids"][row] = compute_position_id_with_mask(attention_mask)
+    text_position_ids = compute_position_id_with_mask(attention_mask).to(
+        device=position_ids.device, dtype=position_ids.dtype
+    )
+    if position_ids.ndim == 3:
+        # Qwen3.5 uses the multimodal processor even for text-only samples and
+        # consequently emits (batch, rope_dim, seq_len) position ids.  All RoPE
+        # channels are ordinary text positions when there are no visual/audio
+        # tokens, so retain that layout instead of mistaking its rank for proof
+        # that the sample itself is multimodal.
+        text_position_ids = text_position_ids.unsqueeze(0).expand(position_ids.shape[1], -1)
+    batch.batch["position_ids"][row] = text_position_ids
 
 
 def apply_hpt(
