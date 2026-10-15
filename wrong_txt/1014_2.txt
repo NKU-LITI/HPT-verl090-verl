@@ -1,0 +1,72 @@
+2026-10-15T11:32:11.580960109+08:00 Traceback (most recent call last):
+2026-10-15T11:32:11.580977089+08:00   File "<frozen runpy>", line 198, in _run_module_as_main
+2026-10-15T11:32:11.581160321+08:00   File "<frozen runpy>", line 88, in _run_code
+2026-10-15T11:32:11.581166331+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo.py", line 204, in <module>
+2026-10-15T11:32:11.585271205+08:00     main()
+2026-10-15T11:32:11.585427916+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+2026-10-15T11:32:11.585607898+08:00     _run_hydra(
+2026-10-15T11:32:11.585612678+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+2026-10-15T11:32:11.585775939+08:00     _run_app(
+2026-10-15T11:32:11.585779959+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+2026-10-15T11:32:11.585927540+08:00     run_and_report(
+2026-10-15T11:32:11.585931660+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+2026-10-15T11:32:11.585939250+08:00     raise ex
+2026-10-15T11:32:11.586077032+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+2026-10-15T11:32:11.586205503+08:00     return func()
+2026-10-15T11:32:11.586209393+08:00            ^^^^^^
+2026-10-15T11:32:11.586213923+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+2026-10-15T11:32:11.586409264+08:00     lambda: hydra.run(
+2026-10-15T11:32:11.586413384+08:00             ^^^^^^^^^^
+2026-10-15T11:32:11.586416344+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 132, in run
+2026-10-15T11:32:11.586503055+08:00     _ = ret.return_value
+2026-10-15T11:32:11.586567406+08:00         ^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.586571476+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/core/utils.py", line 263, in return_value
+2026-10-15T11:32:11.586616686+08:00     raise self._return_value
+2026-10-15T11:32:11.586647356+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/hydra/core/utils.py", line 189, in run_job
+2026-10-15T11:32:11.586806718+08:00     ret.return_value = task_function(task_cfg)
+2026-10-15T11:32:11.586815668+08:00                        ^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.586818868+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo.py", line 200, in main
+2026-10-15T11:32:11.590941442+08:00     run_ppo(config, task_runner_class=TaskRunner)
+2026-10-15T11:32:11.591094983+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo.py", line 94, in run_ppo
+2026-10-15T11:32:11.595166697+08:00     ray.get(runner.run.remote(config))
+2026-10-15T11:32:11.595268678+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 22, in auto_init_wrapper
+2026-10-15T11:32:11.595358859+08:00     return fn(*args, **kwargs)
+2026-10-15T11:32:11.595478330+08:00            ^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.595487370+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 134, in wrapper
+2026-10-15T11:32:11.595555930+08:00     return func(*args, **kwargs)
+2026-10-15T11:32:11.595660061+08:00            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.595663941+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/worker.py", line 2986, in get
+2026-10-15T11:32:11.596412667+08:00     values, debugger_breakpoint = worker.get_objects(
+2026-10-15T11:32:11.596429508+08:00                                   ^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.596434428+08:00   File "/home/ma-user/anaconda3/envs/PyTorch-2.7.1/lib/python3.11/site-packages/ray/_private/worker.py", line 1050, in get_objects
+2026-10-15T11:32:11.596738590+08:00     raise value.as_instanceof_cause()
+2026-10-15T11:32:11.596856161+08:00 ray.exceptions.RayTaskError(AssertionError): [36mray::TaskRunner.run()[39m (pid=795, ip=172.16.190.103, actor_id=6284c04f3fdf949b351b227901000000, repr=<verl.trainer.main_ppo_v0.TaskRunner object at 0xfffdbcfa5350>)
+2026-10-15T11:32:11.596859971+08:00            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.596862691+08:00            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.596865321+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/main_ppo_v0.py", line 234, in run
+2026-10-15T11:32:11.596867881+08:00     trainer.fit()
+2026-10-15T11:32:11.596873321+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/ppo/ray_trainer.py", line 1742, in fit
+2026-10-15T11:32:11.596876101+08:00     old_log_prob, old_log_prob_mfu = self._compute_old_log_prob(batch)
+2026-10-15T11:32:11.596878571+08:00                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.596881211+08:00   File "/opt/huawei/schedule-train/algorithm/verl/trainer/ppo/ray_trainer.py", line 1391, in _compute_old_log_prob
+2026-10-15T11:32:11.596883641+08:00     output = self.actor_rollout_wg.compute_log_prob(batch_td)
+2026-10-15T11:32:11.596886141+08:00              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.596888561+08:00   File "/opt/huawei/schedule-train/algorithm/verl/single_controller/ray/base.py", line 52, in __call__
+2026-10-15T11:32:11.596893071+08:00     args, kwargs = dispatch_fn(self, *args, **kwargs)
+2026-10-15T11:32:11.596895751+08:00                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.596898321+08:00   File "/opt/huawei/schedule-train/algorithm/verl/single_controller/base/decorator.py", line 279, in dispatch_lazy_compute_data_proto
+2026-10-15T11:32:11.596900972+08:00     return dispatch_nd_compute_dataproto(dp_rank_mapping, dp_size, worker_group, *args, **kwargs)
+2026-10-15T11:32:11.596903372+08:00            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.596905902+08:00   File "/opt/huawei/schedule-train/algorithm/verl/single_controller/base/decorator.py", line 251, in dispatch_nd_compute_dataproto
+2026-10-15T11:32:11.596908392+08:00     splitted_args, splitted_kwargs = _split_args_kwargs_data_proto(dp_size, *args, **kwargs)
+2026-10-15T11:32:11.596910822+08:00                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.596914812+08:00   File "/opt/huawei/schedule-train/algorithm/verl/single_controller/base/decorator.py", line 77, in _split_args_kwargs_data_proto
+2026-10-15T11:32:11.596917452+08:00     chunked_arg = BatchData(arg).chunk(chunks=chunks)
+2026-10-15T11:32:11.596921122+08:00                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.596923792+08:00   File "/opt/huawei/schedule-train/algorithm/verl/protocol.py", line 1280, in chunk
+2026-10-15T11:32:11.596926352+08:00     raw_chunks = chunk_tensordict(data, chunks)
+2026-10-15T11:32:11.596928772+08:00                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.596931322+08:00   File "/opt/huawei/schedule-train/algorithm/verl/utils/tensordict_utils.py", line 341, in chunk_tensordict
+2026-10-15T11:32:11.596934072+08:00     assert isinstance(td, TensorDict) and len(td) % chunks == 0, (
+2026-10-15T11:32:11.596936582+08:00            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-15T11:32:11.596939032+08:00 AssertionError: expecting td with length divisible by chunks, but got 640 and 48

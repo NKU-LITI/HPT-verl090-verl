@@ -80,7 +80,7 @@ LOSS_TYPE=${LOSS_TYPE:-dft}
 LR=${LR:-5e-6}
 
 ENV_EXP_NAME=${ENV_EXP_NAME:-1}
-EXP_NAME=${EXP_NAME:-"VERL090_SFT_${MODEL}_lr@${LR}_${ENV_EXP_NAME}"}
+EXP_NAME=${EXP_NAME:-"VERL090_DFT_${MODEL}_lr@${LR}_${ENV_EXP_NAME}"}
 
 # MODEL_PATH=${edu_gy_zsg}qwen35_rl/openllm_model/Qwen/Qwen3___5-35B-A3B
 MODEL_PATH=${MODEL_PATH:-${cq_qwen_datasets}/opensource_multimodal_models_guiyang/Qwen/Qwen3.5-35B-A3B/Qwen/Qwen3___5-35B-A3B} 
@@ -89,7 +89,7 @@ DATA_DIR=${DATA_DIR:-"${DATA_BASEPATH}/HPT_data"}
 # TRAIN_FILE=${TRAIN_FILE:-"${DATA_DIR}/openr1.1024.4096.sample.parquet"}
 # TEST_FILE=${TEST_FILE:-'${DATA_DIR}/AIME24/test.parquet','${DATA_DIR}/AMC23/test.parquet','${DATA_DIR}/MATH-500/test.parquet'}
 # data.train_files="['${DATA_DIR}/math.parquet']" \
-TRAIN_FILE=${TRAIN_FILE:-"${DATA_BASEPATH}/xyi_data/xyi_2_16_1013.parquet"} # xyi.parquet # math_problem_no_length_overflow
+TRAIN_FILE=${TRAIN_FILE:-"${DATA_BASEPATH}/xyi_data/xyi_2_15.parquet"} # xyi.parquet # math_problem_no_length_overflow
 
 TEST_FREQ=${TEST_FREQ:--1}
 
