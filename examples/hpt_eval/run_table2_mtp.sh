@@ -75,11 +75,13 @@ EVAL_TEMPERATURE=${EVAL_TEMPERATURE:-0.6}
 EVAL_TOP_P=${EVAL_TOP_P:-0.95}
 SCORER_WORKERS=${SCORER_WORKERS:-16}
 RESUME_GENERATION=${RESUME_GENERATION:-1}
+PYPI_INDEX_URL=${PYPI_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
 
 NNODES=${NNODES:-${MA_NUM_HOSTS:-1}}
 NPUS_PER_NODE=${NPUS_PER_NODE:-${MA_NUM_GPUS:-8}}
 NODE_RANK=${VC_TASK_INDEX:-0}
-MASTER_ADDR=${VC_WORKER_HOSTS%%,*}
+MASTER_ADDR_SOURCE=${VC_WORKER_HOSTS:-${MA_CURRENT_IP:-127.0.0.1}}
+MASTER_ADDR=${MASTER_ADDR_SOURCE%%,*}
 MASTER_PORT=${MASTER_PORT:-6167}
 DASHBOARD_PORT=${DASHBOARD_PORT:-8191}
 
@@ -205,7 +207,12 @@ AVG1_FILES=("${MATH500_FILE}" "${MINERVA_FILE}" "${OLYMPIAD_FILE}" "${ARCC_FILE}
 require_files "${AVG32_FILES[@]}" "${AVG1_FILES[@]}"
 
 python3 -c 'import torch, torch_npu; assert torch_npu.npu.is_available(); print("NPU ready")'
-python3 -c 'import pandas, pyarrow, aiohttp, openai; print("evaluation dependencies ready")'
+if ! python3 -c 'import pandas, pyarrow, aiohttp, openai, sympy, latex2sympy2_extended, math_verify, pylatexenc'; then
+    python3 -m pip install \
+        pandas pyarrow aiohttp openai sympy latex2sympy2_extended math-verify pylatexenc \
+        -i "${PYPI_INDEX_URL}"
+fi
+python3 -c 'import pandas, pyarrow, aiohttp, openai, sympy, latex2sympy2_extended, math_verify, pylatexenc; print("evaluation dependencies ready")'
 
 if [[ "${NODE_RANK}" == "0" ]]; then
     ray start --head \
@@ -227,6 +234,7 @@ if [[ "${NODE_RANK}" == "0" ]]; then
         sleep 10
     done
     ray status
+    export RAY_ADDRESS="${MA_CURRENT_IP}:${MASTER_PORT}"
 
     STAGES=(SFT DFT GRPO)
     MODEL_PATHS=("${SFT_MODEL_PATH}" "${DFT_MODEL_PATH}" "${GRPO_MODEL_PATH}")

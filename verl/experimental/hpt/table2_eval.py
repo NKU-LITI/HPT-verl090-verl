@@ -31,7 +31,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-
 BENCHMARK_ORDER = ["AIME24", "AIME25", "AMC", "MATH-500", "Minerva", "Olympiad", "ARC-c", "GPQA"]
 ID_BENCHMARKS = BENCHMARK_ORDER[:6]
 OOD_BENCHMARKS = BENCHMARK_ORDER[6:]
@@ -107,11 +106,17 @@ def infer_benchmark(data_source: Any, source_file: Any) -> str:
 
 def _ground_truth(row: pd.Series):
     reward_model = row.get("reward_model")
-    if isinstance(reward_model, dict):
-        return reward_model.get("ground_truth")
-    if hasattr(reward_model, "get"):
-        return reward_model.get("ground_truth")
-    return row.get("ground_truth")
+    if isinstance(reward_model, dict) or hasattr(reward_model, "get"):
+        ground_truth = reward_model.get("ground_truth")
+    else:
+        ground_truth = row.get("ground_truth")
+    # Arrow commonly materializes list-valued ground truths as ndarrays, while
+    # the HPT verifier intentionally accepts Python lists of alternative
+    # answers.  Normalize here instead of silently grading every alternative
+    # answer as invalid.
+    if isinstance(ground_truth, np.ndarray):
+        return ground_truth.tolist()
+    return ground_truth
 
 
 def _aligned(values: Any, size: int, default=None) -> list:
@@ -145,9 +150,13 @@ def load_generated_rollouts(paths: list[Path], stage: str, fallback_max_tokens: 
             data_source = row.get("data_source", "unknown")
             benchmark = infer_benchmark(data_source, source_file)
             max_tokens = _optional_int(row.get("generation_max_tokens")) or fallback_max_tokens
-            base_uid = row.get("uid")
-            if base_uid is None or (isinstance(base_uid, float) and math.isnan(base_uid)):
-                base_uid = f"{source_file}#{row_number}"
+            raw_uid = row.get("uid")
+            if raw_uid is None or (isinstance(raw_uid, float) and math.isnan(raw_uid)):
+                raw_uid = row_number
+            # Prefix with the file because AMC22 and AMC23 can both contain
+            # local integer UIDs.  Treating those as one prompt would turn two
+            # avg@32 problems into one incorrect avg@64 problem.
+            base_uid = f"{source_file}#{raw_uid}"
             for sample_index, response in enumerate(responses):
                 response_tokens = _optional_int(response_counts[sample_index])
                 finish_reason = finish_reasons[sample_index]
@@ -182,7 +191,11 @@ def load_generated_rollouts(paths: list[Path], stage: str, fallback_max_tokens: 
 def _score_one(payload: tuple[str, str, Any, int]) -> tuple[float, str | None, bool]:
     data_source, response, ground_truth, max_response_tokens = payload
     try:
-        from verl.experimental.hpt.reward import compute_score, extract_answer, final_response
+        from verl.experimental.hpt.reward import (
+            compute_score,
+            extract_answer,
+            final_response,
+        )
 
         final = final_response(response)
         format_valid = final is not None and extract_answer(final) is not None
@@ -194,7 +207,7 @@ def _score_one(payload: tuple[str, str, Any, int]) -> tuple[float, str | None, b
             max_response_length=max_response_tokens,
         )
         return float(score), None, format_valid
-    except Exception as exc:  # A bad symbolic expression must not abort the run.
+    except Exception as exc:  # noqa: BLE001 - one bad symbolic expression must not abort an evaluation.
         return 0.0, f"{type(exc).__name__}: {exc}", False
 
 
@@ -252,10 +265,14 @@ def summarize_benchmark(stage: str, benchmark: str, rows: list[dict]) -> dict:
         "avg_at_n": float(np.mean(prompt_scores)),
         "avg_at_n_percent": 100.0 * float(np.mean(prompt_scores)),
         "prompt_level_std": float(np.std(prompt_scores)),
+        "correct_count": sum(row["score"] > 0 for row in rows),
+        "format_valid_count": sum(bool(row["format_valid"]) for row in rows),
         "format_valid_rate": float(np.mean([row["format_valid"] for row in rows])),
         "score_errors": sum(row["score_error"] is not None for row in rows),
+        "prompt_token_count": len(prompt_tokens),
         "prompt_tokens_total": int(sum(prompt_tokens)) if prompt_tokens else None,
         "prompt_tokens_mean": mean_or_none(prompt_tokens),
+        "response_token_count": len(response_tokens),
         "response_tokens_total": int(sum(response_tokens)) if response_tokens else None,
         "response_tokens_mean": mean_or_none(response_tokens),
         "response_tokens_median": percentile_or_none(response_tokens, 50),
@@ -356,17 +373,23 @@ def run_aggregate(args) -> None:
         table_rows.append(table_row)
 
         samples = sum(int(row["samples"]) for row in bench.values())
+        response_count = sum(int(row.get("response_token_count") or 0) for row in bench.values())
+        prompt_count = sum(int(row.get("prompt_token_count") or 0) for row in bench.values())
         response_total = sum(int(row.get("response_tokens_total") or 0) for row in bench.values())
         prompt_total = sum(int(row.get("prompt_tokens_total") or 0) for row in bench.values())
         truncated = sum(int(row.get("truncated_count") or 0) for row in bench.values())
+        format_valid = sum(int(row.get("format_valid_count") or 0) for row in bench.values())
         token_rows.append(
             {
                 "stage": stage,
                 "samples": samples,
+                "token_usage_missing_samples": samples - response_count,
                 "prompt_tokens_total": prompt_total,
                 "response_tokens_total": response_total,
                 "all_tokens_total": prompt_total + response_total,
-                "response_tokens_mean": response_total / samples if samples else None,
+                "prompt_tokens_mean": prompt_total / prompt_count if prompt_count else None,
+                "response_tokens_mean": response_total / response_count if response_count else None,
+                "format_valid_rate": format_valid / samples if samples else None,
                 "truncated_count": truncated,
                 "truncation_rate": truncated / samples if samples else None,
             }

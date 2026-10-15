@@ -45,7 +45,9 @@ bash examples/hpt_eval/run_table2_mtp.sh
 All dataset locations have defaults under `${zlt_data}/HPT_data`, matching
 `zlt_run_grpo_qwen35b_v3.sh`.  Override `AIME24_FILE`, `AIME25_FILE`,
 `AMC_FILES`, `MATH500_FILE`, `MINERVA_FILE`, `OLYMPIAD_FILE`, `ARCC_FILE`, or
-`GPQA_FILE` if the actual directory spelling differs.
+`GPQA_FILE` if the actual directory spelling differs. Missing verifier/runtime
+packages are installed from the same Tsinghua PyPI mirror used by the training
+script; override `PYPI_INDEX_URL` when needed.
 
 ## Outputs
 

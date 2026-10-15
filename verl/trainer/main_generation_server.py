@@ -166,7 +166,7 @@ def main(config):
     chat_numpy = np.array(chat_lst)
 
     # start native server
-    server_handles, server_addresses = asyncio.run(start_server(config))
+    _server_handles, server_addresses = asyncio.run(start_server(config))
 
     # run generate
     gen_results = asyncio.run(
