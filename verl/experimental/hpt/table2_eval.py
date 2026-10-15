@@ -30,6 +30,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 BENCHMARK_ORDER = ["AIME24", "AIME25", "AMC", "MATH-500", "Minerva", "Olympiad", "ARC-c", "GPQA"]
 ID_BENCHMARKS = BENCHMARK_ORDER[:6]
@@ -211,20 +212,35 @@ def _score_one(payload: tuple[str, str, Any, int]) -> tuple[float, str | None, b
         return 0.0, f"{type(exc).__name__}: {exc}", False
 
 
+def _apply_verdicts(rollouts: list[dict], verdicts) -> None:
+    stage = rollouts[0].get("stage", "") if rollouts else ""
+    description = f"Scoring {stage} rollouts" if stage else "Scoring rollouts"
+    # MTP captures stderr rather than providing a TTY, so keep tqdm enabled.
+    # Throttling refreshes prevents one remote-log update per scored sample.
+    with tqdm(
+        verdicts,
+        total=len(rollouts),
+        desc=description,
+        unit="sample",
+        mininterval=2.0,
+        dynamic_ncols=True,
+        disable=False,
+    ) as progress:
+        for row, (score, error, format_valid) in zip(rollouts, progress, strict=True):
+            row.update(score=score, score_error=error, format_valid=format_valid)
+
+
 def score_rollouts(rollouts: list[dict], workers: int) -> None:
     payloads = [
         (row["data_source"], row["response"], row["ground_truth"], row["max_response_tokens"])
         for row in rollouts
     ]
     if workers == 1:
-        verdicts = map(_score_one, payloads)
-        for row, (score, error, format_valid) in zip(rollouts, verdicts, strict=True):
-            row.update(score=score, score_error=error, format_valid=format_valid)
+        _apply_verdicts(rollouts, map(_score_one, payloads))
         return
     with Pool(processes=workers, maxtasksperchild=256) as pool:
         verdicts = pool.imap(_score_one, payloads, chunksize=16)
-        for row, (score, error, format_valid) in zip(rollouts, verdicts, strict=True):
-            row.update(score=score, score_error=error, format_valid=format_valid)
+        _apply_verdicts(rollouts, verdicts)
 
 
 def _mode(values: list[int]) -> int:

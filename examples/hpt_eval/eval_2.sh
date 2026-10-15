@@ -182,6 +182,7 @@ generate_group() {
         data.train_files="${files_json}" \
         data.prompt_key=prompt \
         +data.output_path="${output_path}" \
+        +data.progress_desc="Generating ${stage} avg@${sample_count}" \
         actor_rollout_ref.model.path="${model_path}" \
         actor_rollout_ref.model.trust_remote_code=True \
         actor_rollout_ref.rollout.name=vllm \
@@ -231,12 +232,12 @@ AVG1_FILES=("${MATH500_FILE}" "${MINERVA_FILE}" "${OLYMPIAD_FILE}" "${ARCC_FILE}
 require_files "${AVG32_FILES[@]}" "${AVG1_FILES[@]}"
 
 python3 -c 'import torch, torch_npu; assert torch_npu.npu.is_available(); print("NPU ready")'
-if ! python3 -c 'import pandas, pyarrow, aiohttp, openai, sympy, latex2sympy2_extended, math_verify, pylatexenc'; then
+if ! python3 -c 'import pandas, pyarrow, aiohttp, openai, sympy, latex2sympy2_extended, math_verify, pylatexenc, tqdm'; then
     python3 -m pip install \
-        pandas pyarrow aiohttp openai sympy latex2sympy2_extended math-verify pylatexenc \
+        pandas pyarrow aiohttp openai sympy latex2sympy2_extended math-verify pylatexenc tqdm \
         -i "${PYPI_INDEX_URL}"
 fi
-python3 -c 'import pandas, pyarrow, aiohttp, openai, sympy, latex2sympy2_extended, math_verify, pylatexenc; print("evaluation dependencies ready")'
+python3 -c 'import pandas, pyarrow, aiohttp, openai, sympy, latex2sympy2_extended, math_verify, pylatexenc, tqdm; print("evaluation dependencies ready")'
 
 if [[ "${NODE_RANK}" == "0" ]]; then
     ray start --head \

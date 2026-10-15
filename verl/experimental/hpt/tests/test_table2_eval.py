@@ -1,6 +1,7 @@
 import numpy as np
 
-from verl.experimental.hpt.table2_eval import infer_benchmark, summarize_benchmark
+from verl.experimental.hpt import table2_eval
+from verl.experimental.hpt.table2_eval import infer_benchmark, score_rollouts, summarize_benchmark
 
 
 def _row(uid, score, tokens, truncated=False):
@@ -37,3 +38,30 @@ def test_summary_uses_prompt_level_avg_at_n_and_token_counts():
     assert summary["response_tokens_mean"] == 250
     assert summary["truncation_rate"] == 0.25
     assert np.isclose(summary["prompt_level_std"], 0.25)
+
+
+def test_score_rollouts_reports_progress(monkeypatch, capsys):
+    rollouts = [
+        {
+            "stage": "SFT",
+            "data_source": "math",
+            "response": "first",
+            "ground_truth": "1",
+            "max_response_tokens": 32,
+        },
+        {
+            "stage": "SFT",
+            "data_source": "math",
+            "response": "second",
+            "ground_truth": "2",
+            "max_response_tokens": 32,
+        },
+    ]
+    monkeypatch.setattr(table2_eval, "_score_one", lambda _payload: (1.0, None, True))
+
+    score_rollouts(rollouts, workers=1)
+
+    progress_output = capsys.readouterr().err
+    assert "Scoring SFT rollouts" in progress_output
+    assert "2/2" in progress_output
+    assert all(row["score"] == 1.0 for row in rollouts)
