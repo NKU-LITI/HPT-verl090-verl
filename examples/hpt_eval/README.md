@@ -1,5 +1,7 @@
 # HPT Table 2 evaluation on MTP
 
+Chinese model-export and evaluation guide: [README_zh.md](README_zh.md).
+
 This directory evaluates the SFT, DFT, and GRPO checkpoints with the protocol
 from HPT Table 2.  DFT is an additional comparison row; it is not a row in the
 paper's original Table 2.
@@ -18,6 +20,17 @@ paper's combined benchmark, set:
 
 ```bash
 AMC_FILES="${DATA_DIR}/AMC22/test.parquet,${DATA_DIR}/AMC23/test.parquet"
+```
+
+The data bundled with `HPT-verl090/data` uses the directory name
+`Olympiad-Bench`, which is also the default here. This repository additionally
+contains the missing 1,172-row ARC-Challenge test set at
+`data/ARC-c/test.parquet`. To regenerate it from the pinned `allenai/ai2_arc`
+source:
+
+```bash
+python3 examples/hpt_eval/prepare_arc_c.py \
+  --output "${zlt_data}/HPT_data/ARC-c/test.parquet"
 ```
 
 ## 1. Merge checkpoints
