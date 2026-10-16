@@ -116,7 +116,8 @@ TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
 PROJECT_NAME=${PROJECT_NAME:-VERL090_RIGHT_MTP_${DATE}_HPT_Qwen35-35B-A3B_lr@${LR}_${TIME_TAG}_${TIMESTAMP}}
 
 
-TENSORBOARD_DIR="${BASE_PATH}/tensorboard/${PROJECT_NAME}/"
+RUN_DIR=${BASE_PATH}/runs/hpt/${EXPERIMENT_NAME:-${PROJECT_NAME}}
+TENSORBOARD_DIR="${RUN_DIR}/tensorboard"
 mkdir -p "${TENSORBOARD_DIR}"
 echo "TENSORBOARD_DIR = ${TENSORBOARD_DIR}"
 # ====================================================================
@@ -154,12 +155,12 @@ ROLLOUT_N=${ROLLOUT_N:-8}
 ROLLOUT_TEMPERATURE=${ROLLOUT_TEMPERATURE:-1.0}
 ROLLOUT_TOP_P=${ROLLOUT_TOP_P:-0.99}
 
-DEFAULT_LOCAL_DIR=${DEFAULT_LOCAL_DIR:-${BASE_PATH}/ckpt/${PROJECT_NAME}/}
+DEFAULT_LOCAL_DIR=${DEFAULT_LOCAL_DIR:-${RUN_DIR}/checkpoint}
 
-LOG_PATH=${LOG_PATH:-${BASE_PATH}/log/${PROJECT_NAME}/}
+LOG_PATH=${LOG_PATH:-${RUN_DIR}/log}
 echo "LOG_PATH resolved to: ${LOG_PATH}"
 
-ROLLOUT_DATA_DIR=${ROLLOUT_DATA_DIR:-${BASE_PATH}/rollout/${PROJECT_NAME}/}
+ROLLOUT_DATA_DIR=${ROLLOUT_DATA_DIR:-${RUN_DIR}/rollout}
 echo "ROLLOUT_DATA_DIR resolved to: ${ROLLOUT_DATA_DIR}"
 
 TOTAL_EPOCHS=${TOTAL_EPOCHS:-1}
@@ -290,7 +291,7 @@ if [ "${NODE_RANK}" = "0" ]; then
                 actor_rollout_ref.actor.fsdp_config.param_offload=True \
                 actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \
                 actor_rollout_ref.actor.fsdp_config.forward_prefetch=True \
-                actor_rollout_ref.actor.checkpoint.save_contents="['model','extra']" \
+                actor_rollout_ref.actor.checkpoint.save_contents="['model','optimizer','extra']" \
                 actor_rollout_ref.ref.strategy=fsdp2 \
                 actor_rollout_ref.ref.fsdp_config.param_offload=True \
                 actor_rollout_ref.ref.fsdp_config.forward_prefetch=True \
@@ -328,6 +329,7 @@ if [ "${NODE_RANK}" = "0" ]; then
                 +hpt.off_policy_beta=$OFF_POLICY_BETA \
                 +hpt.max_grad_norm=$MAX_GRAD_NORM \
                 trainer.balance_batch=True \
+                trainer.use_v1=False \
                 trainer.logger='["console","tensorboard"]' \
                 trainer.project_name=${PROJECT_NAME} \
                 trainer.experiment_name=${EXPERIMENT_NAME} \

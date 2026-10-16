@@ -21,16 +21,16 @@ pip install --upgrade accelerate -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install aiohttp aiofiles math-verify -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 BASE_PATH=${zlt_data}
-SFT_CKPT=${SFT_CKPT:-${zlt_data}/runs/sft/qwen35_35b_0922/checkpoint/global_step_885}
-DFT_CKPT=${DFT_CKPT:-${zlt_data}/runs/dft/qwen35_35b_0922/checkpoint/global_step_885}
+SFT_CKPT=${SFT_CKPT:-${zlt_data}/runs/dft/qwen35_35b_1015/checkpoint/global_step_550}
+DFT_CKPT=${DFT_CKPT:-${zlt_data}/runs/dft/qwen35_35b_1015/checkpoint/global_step_440}
 # GRPO_CKPT=${GRPO_CKPT:?set GRPO_CKPT to a GRPO global_step_* directory or its actor directory}
 SFT_BACKEND=${SFT_BACKEND:-fsdp}
 DFT_BACKEND=${DFT_BACKEND:-fsdp}
 # GRPO_BACKEND=${GRPO_BACKEND:-fsdp}
 # MERGED_ROOT=${MERGED_ROOT:-${BASE_PATH}/runs/eval_models}
 
-SFT_MODEL_PATH=${SFT_MODEL_PATH:-${BASE_PATH}/runs/sft/qwen35_35b_0922/qwen35b_sft_hf}
-DFT_MODEL_PATH=${DFT_MODEL_PATH:-${BASE_PATH}/runs/dft/qwen35_35b_0922/qwen35b_dft_hf}
+SFT_MODEL_PATH=${SFT_MODEL_PATH:-${BASE_PATH}/runs/dft/qwen35_35b_1015/checkpoint/global_step_550_hf}
+DFT_MODEL_PATH=${DFT_MODEL_PATH:-${BASE_PATH}/runs/dft/qwen35_35b_1015/checkpoint/global_step_440_hf}
 # GRPO_MODEL_PATH=${GRPO_MODEL_PATH:-${MERGED_ROOT}/qwen35b_grpo_hf}
 
 resolve_grpo_actor() {

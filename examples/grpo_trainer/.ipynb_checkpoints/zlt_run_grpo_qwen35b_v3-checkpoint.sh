@@ -93,7 +93,7 @@ DATA_DIR=${DATA_DIR:-"${BASE_PATH}/HPT_data"}
 TRAIN_FILE=${TRAIN_FILE:-"${BASE_PATH}/xyi_data/xyi_2_16_1013.parquet"} # xyi.parquet # math_problem_no_length_overflow
 
 TEST_FILE=${TEST_FILE:-["${DATA_DIR}/AIME24/test.parquet","${DATA_DIR}/AMC23/test.parquet"]}
-# TEST_FILE=${TEST_FILE:-["${DATA_DIR}/MATH-500/test.parquet"]}
+# TEST_FILE=${TEST_FILE:-["${DATA_DIR}/MATH-500/test.parquet", "${DATA_DIR}/AIME25/test.parquet", "${DATA_DIR}/Olympiad/test.parquet"]}
 
 
 pip install "accelerate>=1.6.0" -i https://pypi.tuna.tsinghua.edu.cn/simple
@@ -114,7 +114,8 @@ EXPERIMENT_NAME=${EXPERIMENT_NAME}
 TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
 PROJECT_NAME=${PROJECT_NAME:-VERL090_RIGHT_MTP_${DATE}_GRPO_Qwen35-35B-A3B_lr@${LR}_${TIME_TAG}_${TIMESTAMP}}
 
-TENSORBOARD_DIR="${BASE_PATH}/tensorboard/${PROJECT_NAME}/"
+RUN_DIR=${BASE_PATH}/runs/grpo/${EXPERIMENT_NAME:-${PROJECT_NAME}}
+TENSORBOARD_DIR="${RUN_DIR}/tensorboard"
 mkdir -p "${TENSORBOARD_DIR}"
 echo "TENSORBOARD_DIR = ${TENSORBOARD_DIR}"
 # ====================================================================
@@ -152,12 +153,12 @@ ROLLOUT_N=${ROLLOUT_N:-8}
 ROLLOUT_TEMPERATURE=${ROLLOUT_TEMPERATURE:-1.0}
 ROLLOUT_TOP_P=${ROLLOUT_TOP_P:-0.99}
 
-DEFAULT_LOCAL_DIR=${DEFAULT_LOCAL_DIR:-${BASE_PATH}/ckpt/${PROJECT_NAME}/}
+DEFAULT_LOCAL_DIR=${DEFAULT_LOCAL_DIR:-${RUN_DIR}/checkpoint}
 
-LOG_PATH=${LOG_PATH:-${BASE_PATH}/log/${PROJECT_NAME}/}
+LOG_PATH=${LOG_PATH:-${RUN_DIR}/log}
 echo "LOG_PATH resolved to: ${LOG_PATH}"
 
-ROLLOUT_DATA_DIR=${ROLLOUT_DATA_DIR:-${BASE_PATH}/rollout/${PROJECT_NAME}/}
+ROLLOUT_DATA_DIR=${ROLLOUT_DATA_DIR:-${RUN_DIR}/rollout}
 echo "ROLLOUT_DATA_DIR resolved to: ${ROLLOUT_DATA_DIR}"
 
 # ulyess_sequence_len
@@ -276,7 +277,7 @@ if [ "${NODE_RANK}" = "0" ]; then
                 actor_rollout_ref.actor.fsdp_config.param_offload=True \
                 actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \
                 actor_rollout_ref.actor.fsdp_config.forward_prefetch=True \
-                actor_rollout_ref.actor.checkpoint.save_contents="['model','extra']" \
+                actor_rollout_ref.actor.checkpoint.save_contents="['model','optimizer','extra']" \
                 actor_rollout_ref.ref.strategy=fsdp2 \
                 actor_rollout_ref.ref.fsdp_config.param_offload=True \
                 actor_rollout_ref.ref.fsdp_config.forward_prefetch=True \
