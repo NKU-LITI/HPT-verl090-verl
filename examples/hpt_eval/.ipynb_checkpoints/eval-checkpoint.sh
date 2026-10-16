@@ -24,6 +24,7 @@ export HTTP_PROXY="$PROXY_ADDR"
 export FTP_PROXY="$PROXY_ADDR"
 
 DATE_TAG=$(date +%Y%m%d_%H%M%S)
+TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
 ROOT_PATH=${ROOT_PATH:-/opt/huawei}
 PROJECT_ROOT=${PROJECT_ROOT:-/cache/algorithm}
 
@@ -59,13 +60,17 @@ export VLLM_RPC_TIMEOUT=600000
 
 BASE_PATH=${zlt_data}
 DATA_DIR=${DATA_DIR:-${BASE_PATH}/HPT_data}
-OUTPUT_ROOT=${OUTPUT_ROOT:-${BASE_PATH}/runs/eval_result/HPT_table2_${DATE_TAG}}
 
 # Fine-tuned checkpoints must be merged to HuggingFace format before rollout.
-SFT_MODEL_PATH=${SFT_MODEL_PATH:-${BASE_PATH}/runs/sft/qwen35_35b_0922/qwen35b_sft_hf}
+METHOD=BASE
+MAX_RESPONSE_LENGTH=${MAX_RESPONSE_LENGTH:-8192}
+MODEL_PATH=${MODEL_PATH:-${cq_qwen_datasets}/opensource_multimodal_models_guiyang/Qwen/Qwen3.5-35B-A3B/Qwen/Qwen3___5-35B-A3B} 
+OUTPUT_ROOT=${OUTPUT_ROOT:-${BASE_PATH}/runs/eval_result/${METHOD}_${MAX_RESPONSE_LENGTH}_${DATE_TAG}}
+
+# SFT_MODEL_PATH=${SFT_MODEL_PATH:-${BASE_PATH}/runs/sft/qwen35_35b_0922/qwen35b_sft_hf}
 # DFT_MODEL_PATH=${DFT_MODEL_PATH:-${BASE_PATH}/runs/dft/qwen35_35b_0922/qwen35b_sft_hf}
 # GRPO_MODEL_PATH=${GRPO_MODEL_PATH:-${BASE_PATH}/eval_models/qwen35b_grpo_hf}
-HPT_MODEL_PATH=${HPT_MODEL_PATH:-}
+# HPT_MODEL_PATH=${HPT_MODEL_PATH:-}
 
 # Defaults follow zlt_run_grpo_qwen35b_v3.sh and its commented validation set.
 AIME24_FILE=${AIME24_FILE:-${DATA_DIR}/AIME24/test.parquet}
@@ -78,7 +83,6 @@ ARCC_FILE=${ARCC_FILE:-${DATA_DIR}/ARC-C/test.parquet}
 GPQA_FILE=${GPQA_FILE:-${DATA_DIR}/GPQA/test.parquet}
 
 MAX_PROMPT_LENGTH=${MAX_PROMPT_LENGTH:-1024}
-MAX_RESPONSE_LENGTH=${MAX_RESPONSE_LENGTH:-8192}
 MAX_MODEL_LEN=${MAX_MODEL_LEN:-12888}
 ROLLOUT_TP=${ROLLOUT_TP:-4}
 ROLLOUT_GPU_MEM_UTIL=${ROLLOUT_GPU_MEM_UTIL:-0.55}
@@ -159,7 +163,7 @@ generate_group() {
     files_json=$(json_array "${files[@]}")
 
     if [[ "${RESUME_GENERATION}" == "1" && -s "${output_path}" ]]; then
-        echo "Reuse existing rollout parquet: ${output_path}"
+        echo "Reuse existing rollout JSON: ${output_path}"
         return
     fi
 
@@ -169,6 +173,7 @@ generate_group() {
         data.train_files="${files_json}" \
         data.prompt_key=prompt \
         +data.output_path="${output_path}" \
+        +data.progress_desc="Generating ${stage} avg@${sample_count}" \
         actor_rollout_ref.model.path="${model_path}" \
         actor_rollout_ref.model.trust_remote_code=True \
         actor_rollout_ref.rollout.name=vllm \
@@ -199,13 +204,13 @@ evaluate_stage() {
     fi
 
     # Paper protocol: avg@32 for contest sets; avg@1 for the remaining sets.
-    generate_group "${stage}" "${model_path}" 32 "${generated_dir}/avg32.parquet" "${AVG32_FILES[@]}"
-    generate_group "${stage}" "${model_path}" 1 "${generated_dir}/avg1.parquet" "${AVG1_FILES[@]}"
+    generate_group "${stage}" "${model_path}" 32 "${generated_dir}/avg32.json" "${AVG32_FILES[@]}"
+    generate_group "${stage}" "${model_path}" 1 "${generated_dir}/avg1.json" "${AVG1_FILES[@]}"
 
     python3 -m verl.experimental.hpt.table2_eval score \
         --stage "${stage}" \
-        --input "${generated_dir}/avg32.parquet" \
-        --input "${generated_dir}/avg1.parquet" \
+        --input "${generated_dir}/avg32.json" \
+        --input "${generated_dir}/avg1.json" \
         --output-dir "${stage_dir}" \
         --workers "${SCORER_WORKERS}" \
         --max-response-tokens "${MAX_RESPONSE_LENGTH}"
@@ -218,12 +223,12 @@ AVG1_FILES=("${MATH500_FILE}" "${MINERVA_FILE}" "${OLYMPIAD_FILE}" "${ARCC_FILE}
 require_files "${AVG32_FILES[@]}" "${AVG1_FILES[@]}"
 
 python3 -c 'import torch, torch_npu; assert torch_npu.npu.is_available(); print("NPU ready")'
-if ! python3 -c 'import pandas, pyarrow, aiohttp, openai, sympy, latex2sympy2_extended, math_verify, pylatexenc'; then
+if ! python3 -c 'import pandas, pyarrow, aiohttp, openai, sympy, latex2sympy2_extended, math_verify, pylatexenc, tqdm'; then
     python3 -m pip install \
-        pandas pyarrow aiohttp openai sympy latex2sympy2_extended math-verify pylatexenc \
+        pandas pyarrow aiohttp openai sympy latex2sympy2_extended math-verify pylatexenc tqdm \
         -i "${PYPI_INDEX_URL}"
 fi
-python3 -c 'import pandas, pyarrow, aiohttp, openai, sympy, latex2sympy2_extended, math_verify, pylatexenc; print("evaluation dependencies ready")'
+python3 -c 'import pandas, pyarrow, aiohttp, openai, sympy, latex2sympy2_extended, math_verify, pylatexenc, tqdm; print("evaluation dependencies ready")'
 
 if [[ "${NODE_RANK}" == "0" ]]; then
     ray start --head \
@@ -247,12 +252,12 @@ if [[ "${NODE_RANK}" == "0" ]]; then
     ray status
     export RAY_ADDRESS="${MA_CURRENT_IP}:${MASTER_PORT}"
 
-    STAGES=(SFT) # DFT) # GRPO)
-    MODEL_PATHS=("${SFT_MODEL_PATH}") # "${DFT_MODEL_PATH}") # "${GRPO_MODEL_PATH}")
-    if [[ -n "${HPT_MODEL_PATH}" ]]; then
-        STAGES+=(HPT)
-        MODEL_PATHS+=("${HPT_MODEL_PATH}")
-    fi
+    STAGES=($METHOD) # DFT) # GRPO)
+    MODEL_PATHS=("${MODEL_PATH}") # "${DFT_MODEL_PATH}") # "${GRPO_MODEL_PATH}")
+    # if [[ -n "${HPT_MODEL_PATH}" ]]; then
+    #     STAGES+=(HPT)
+    #     MODEL_PATHS+=("${HPT_MODEL_PATH}")
+    # fi
 
     RUN_DIR_ARGS=()
     for index in "${!STAGES[@]}"; do

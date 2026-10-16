@@ -24,6 +24,7 @@ export HTTP_PROXY="$PROXY_ADDR"
 export FTP_PROXY="$PROXY_ADDR"
 
 DATE_TAG=$(date +%Y%m%d_%H%M%S)
+TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
 ROOT_PATH=${ROOT_PATH:-/opt/huawei}
 PROJECT_ROOT=${PROJECT_ROOT:-/cache/algorithm}
 
@@ -59,13 +60,17 @@ export VLLM_RPC_TIMEOUT=600000
 
 BASE_PATH=${zlt_data}
 DATA_DIR=${DATA_DIR:-${BASE_PATH}/HPT_data}
-OUTPUT_ROOT=${OUTPUT_ROOT:-${BASE_PATH}/runs/eval_result/HPT_table2_${DATE_TAG}}
 
 # Fine-tuned checkpoints must be merged to HuggingFace format before rollout.
-SFT_MODEL_PATH=${SFT_MODEL_PATH:-${BASE_PATH}/runs/sft/qwen35_35b_0922/qwen35b_sft_hf}
+METHOD=BASE
+MAX_RESPONSE_LENGTH=${MAX_RESPONSE_LENGTH:-8192}
+MODEL_PATH=${MODEL_PATH:-${cq_qwen_datasets}/opensource_multimodal_models_guiyang/Qwen/Qwen3.5-35B-A3B/Qwen/Qwen3___5-35B-A3B} 
+OUTPUT_ROOT=${OUTPUT_ROOT:-${BASE_PATH}/runs/eval_result/${METHOD}_${MAX_RESPONSE_LENGTH}_${DATE_TAG}}
+
+# SFT_MODEL_PATH=${SFT_MODEL_PATH:-${BASE_PATH}/runs/sft/qwen35_35b_0922/qwen35b_sft_hf}
 # DFT_MODEL_PATH=${DFT_MODEL_PATH:-${BASE_PATH}/runs/dft/qwen35_35b_0922/qwen35b_sft_hf}
 # GRPO_MODEL_PATH=${GRPO_MODEL_PATH:-${BASE_PATH}/eval_models/qwen35b_grpo_hf}
-HPT_MODEL_PATH=${HPT_MODEL_PATH:-}
+# HPT_MODEL_PATH=${HPT_MODEL_PATH:-}
 
 # Defaults follow zlt_run_grpo_qwen35b_v3.sh and its commented validation set.
 AIME24_FILE=${AIME24_FILE:-${DATA_DIR}/AIME24/test.parquet}
@@ -78,7 +83,6 @@ ARCC_FILE=${ARCC_FILE:-${DATA_DIR}/ARC-C/test.parquet}
 GPQA_FILE=${GPQA_FILE:-${DATA_DIR}/GPQA/test.parquet}
 
 MAX_PROMPT_LENGTH=${MAX_PROMPT_LENGTH:-1024}
-MAX_RESPONSE_LENGTH=${MAX_RESPONSE_LENGTH:-8192}
 MAX_MODEL_LEN=${MAX_MODEL_LEN:-12888}
 ROLLOUT_TP=${ROLLOUT_TP:-4}
 ROLLOUT_GPU_MEM_UTIL=${ROLLOUT_GPU_MEM_UTIL:-0.55}
@@ -248,12 +252,12 @@ if [[ "${NODE_RANK}" == "0" ]]; then
     ray status
     export RAY_ADDRESS="${MA_CURRENT_IP}:${MASTER_PORT}"
 
-    STAGES=(SFT) # DFT) # GRPO)
-    MODEL_PATHS=("${SFT_MODEL_PATH}") # "${DFT_MODEL_PATH}") # "${GRPO_MODEL_PATH}")
-    if [[ -n "${HPT_MODEL_PATH}" ]]; then
-        STAGES+=(HPT)
-        MODEL_PATHS+=("${HPT_MODEL_PATH}")
-    fi
+    STAGES=($METHOD) # DFT) # GRPO)
+    MODEL_PATHS=("${MODEL_PATH}") # "${DFT_MODEL_PATH}") # "${GRPO_MODEL_PATH}")
+    # if [[ -n "${HPT_MODEL_PATH}" ]]; then
+    #     STAGES+=(HPT)
+    #     MODEL_PATHS+=("${HPT_MODEL_PATH}")
+    # fi
 
     RUN_DIR_ARGS=()
     for index in "${!STAGES[@]}"; do
