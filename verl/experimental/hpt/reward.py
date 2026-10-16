@@ -42,7 +42,8 @@ def final_response(solution_str: str) -> str | None:
     The verifier then takes the last ``\\boxed{}`` in this text as the answer.
     """
     if THINK_END not in solution_str:
-        return None
+        # return None
+        return solution_str
     return solution_str.rsplit(THINK_END, 1)[1]
 
 
