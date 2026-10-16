@@ -65,7 +65,7 @@ DATA_DIR=${DATA_DIR:-${BASE_PATH}/HPT_data}
 METHOD=DFT
 MAX_RESPONSE_LENGTH=${MAX_RESPONSE_LENGTH:-10240}
 # MODEL_PATH=${MODEL_PATH:-${cq_qwen_datasets}/opensource_multimodal_models_guiyang/Qwen/Qwen3.5-35B-A3B/Qwen/Qwen3___5-35B-A3B} 
-MODEL_PATH=${DFT_MODEL_PATH:-${BASE_PATH}/runs/dft/qwen35_35b_0922/qwen35b_sft_hf}
+MODEL_PATH=${SFT_MODEL_PATH:-${BASE_PATH}/runs/dft/qwen35_35b_0922/qwen35b_dft_hf}
 OUTPUT_ROOT=${OUTPUT_ROOT:-${BASE_PATH}/runs/eval_result/${METHOD}_${MAX_RESPONSE_LENGTH}_${DATE_TAG}}
 
 # SFT_MODEL_PATH=${SFT_MODEL_PATH:-${BASE_PATH}/runs/sft/qwen35_35b_0922/qwen35b_sft_hf}
