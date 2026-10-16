@@ -172,8 +172,8 @@ bash examples/hpt_eval/run_table2_mtp.sh
 每个阶段（`SFT`、`DFT`、`GRPO`，可选 `HPT`）目录包含：
 
 - `generated/avg32.json`、`generated/avg1.json`：原始批量生成结果；
-- `rollouts.jsonl`：每条 rollout 的回答、reward、token 数、finish reason、
-  格式是否合法及是否截断；
+- `rollouts.jsonl`：每条 rollout 的回答、reward、明确的 `is_correct` 判定、
+  token 数、finish reason、格式是否合法及是否截断；
 - `benchmark_summary.csv`：逐 benchmark 的准确率、token 分布、格式率和
   截断率；
 - `summary.json`：该阶段的机器可读汇总。

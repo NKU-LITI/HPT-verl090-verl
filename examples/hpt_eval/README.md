@@ -68,8 +68,9 @@ Each stage directory contains:
 
 - `generated/avg32.json` and `generated/avg1.json`: raw server outputs,
   including exact prompt/response token counts and finish reasons.
-- `rollouts.jsonl`: one durable record per rollout, with answer, reward, token
-  counts, format validity, and truncation flag.
+- `rollouts.jsonl`: one durable record per rollout, with answer, reward, an
+  explicit `is_correct` verdict, token counts, format validity, and truncation
+  flag.
 - `benchmark_summary.csv`: accuracy, token distribution, format rate, and
   truncation rate by benchmark.
 

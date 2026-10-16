@@ -89,11 +89,16 @@ def test_score_rollouts_reports_progress(monkeypatch, capsys):
             "max_response_tokens": 32,
         },
     ]
-    monkeypatch.setattr(table2_eval, "_score_one", lambda _payload: (1.0, None, True))
+    monkeypatch.setattr(
+        table2_eval,
+        "_score_one",
+        lambda payload: (float(payload[1] == "first"), None, True),
+    )
 
     score_rollouts(rollouts, workers=1)
 
     progress_output = capsys.readouterr().err
     assert "Scoring SFT rollouts" in progress_output
     assert "2/2" in progress_output
-    assert all(row["score"] == 1.0 for row in rollouts)
+    assert [row["score"] for row in rollouts] == [1.0, 0.0]
+    assert [row["is_correct"] for row in rollouts] == [True, False]

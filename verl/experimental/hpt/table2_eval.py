@@ -236,7 +236,12 @@ def _apply_verdicts(rollouts: list[dict], verdicts) -> None:
         disable=False,
     ) as progress:
         for row, (score, error, format_valid) in zip(rollouts, progress, strict=True):
-            row.update(score=score, score_error=error, format_valid=format_valid)
+            row.update(
+                score=score,
+                is_correct=bool(score > 0),
+                score_error=error,
+                format_valid=format_valid,
+            )
 
 
 def score_rollouts(rollouts: list[dict], workers: int) -> None:
