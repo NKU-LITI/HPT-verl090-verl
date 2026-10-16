@@ -8,7 +8,7 @@
 
 """Score HPT Table-2 rollouts and build accuracy/token/truncation reports.
 
-The ``score`` command consumes parquet files written by
+The ``score`` command consumes JSON or parquet files written by
 ``verl.trainer.main_generation_server``.  It explodes every sampled response
 to JSONL, applies the repository's HPT verifier, and reports avg@N per prompt.
 The ``aggregate`` command combines SFT/DFT/GRPO/HPT runs into one Table-2-style
@@ -132,10 +132,19 @@ def _aligned(values: Any, size: int, default=None) -> list:
 
 
 def load_generated_rollouts(paths: list[Path], stage: str, fallback_max_tokens: int) -> list[dict]:
-    """Explode generated parquet rows into one record per sampled response."""
+    """Explode generated rows into one record per sampled response."""
     rollouts: list[dict] = []
     for path in paths:
-        frame = pd.read_parquet(path)
+        if path.suffix == ".json":
+            with path.open(encoding="utf-8") as handle:
+                rows = json.load(handle)
+            if not isinstance(rows, list):
+                raise ValueError(f"{path} must contain a JSON array of row objects")
+            frame = pd.DataFrame(rows)
+        elif path.suffix == ".parquet":
+            frame = pd.read_parquet(path)
+        else:
+            raise ValueError(f"unsupported generated file format: {path}")
         if "responses" not in frame:
             raise KeyError(f"{path} has no 'responses' column")
         for row_number, row in frame.iterrows():
@@ -334,7 +343,7 @@ def _write_csv(path: Path, rows: list[dict]) -> None:
 def run_score(args) -> None:
     rollouts = load_generated_rollouts(args.input, args.stage, args.max_response_tokens)
     if not rollouts:
-        raise ValueError("no responses found in the supplied parquet files")
+        raise ValueError("no responses found in the supplied generated files")
     score_rollouts(rollouts, args.workers)
     summary = summarize(args.stage, rollouts)
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -434,8 +443,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    score_parser = subparsers.add_parser("score", help="score generated parquet files")
-    score_parser.add_argument("--input", type=Path, action="append", required=True, help="repeat for each parquet")
+    score_parser = subparsers.add_parser("score", help="score generated JSON or parquet files")
+    score_parser.add_argument("--input", type=Path, action="append", required=True, help="repeat for each generated file")
     score_parser.add_argument("--stage", required=True, help="Base/SFT/DFT/GRPO/HPT or another checkpoint label")
     score_parser.add_argument("--output-dir", type=Path, required=True)
     score_parser.add_argument("--workers", type=int, default=8)

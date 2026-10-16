@@ -253,11 +253,17 @@ def main(config):
     dataset["generation_temperature"] = float(config.actor_rollout_ref.rollout.temperature)
     dataset["generation_top_p"] = float(config.actor_rollout_ref.rollout.top_p)
 
-    # write to a new parquet
+    # Select the output format from the filename. JSON uses a readable array of
+    # row objects and preserves the nested prompt and sample metadata.
     output_dir = os.path.dirname(config.data.output_path)
     makedirs(output_dir, exist_ok=True)
     print(f"Saving results to {config.data.output_path}")
-    dataset.to_parquet(config.data.output_path)
+    if config.data.output_path.endswith(".json"):
+        dataset.to_json(config.data.output_path, orient="records", force_ascii=False, indent=2)
+    elif config.data.output_path.endswith(".parquet"):
+        dataset.to_parquet(config.data.output_path)
+    else:
+        raise ValueError("data.output_path must end in .json or .parquet")
 
 
 if __name__ == "__main__":

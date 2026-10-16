@@ -92,22 +92,11 @@ python -c "import accelerate; print(accelerate.__version__)"
 
 # ========================================================================
 
-PROJECT_NAME=${PROJECT_NAME:-VERL090_MTP_${DATE}_GRPO_Qwen25-math-7B_lr@${LR}_${TIME_TAG}_${TIMESTAMP}}
-
-
 MODEL=${MODEL:-Qwen2.5-Math-7B} # Qwen2.5-Math-7B-16k
 MODEL_PATH=${MODEL_PATH:-"${upload_zyz}/${MODEL}"}
 
 NNODES=${NNODES:-$MA_NUM_HOSTS}
 EXPERIMENT_NAME=${EXPERIMENT_NAME}
-
-
-# ================= TensorBoard 输出目录（带时间戳） =================
-TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
-TENSORBOARD_DIR="${BASE_PATH}/${PROJECT_NAME}/tensorboard/"
-mkdir -p "${TENSORBOARD_DIR}"
-echo "TENSORBOARD_DIR = ${TENSORBOARD_DIR}"
-# ====================================================================
 
 
 # ================= 规则奖励（rule-only）配置 =================
@@ -144,24 +133,18 @@ MAX_GRAD_NORM=${MAX_GRAD_NORM:-80.0}
 
 LR=${LR:-5e-6}
 MODEL=${MODEL:-Qwen2.5-Math-7B} # Qwen2.5-Math-7B-16k
-# MODEL_PATH=${MODEL_PATH:-"/home/ma-user/work/Scaf-GRPO/${MODEL}"} 
+# MODEL_PATH=${MODEL_PATH:-"/home/ma-user/work/Scaf-GRPO/${MODEL}"}
 MODEL_PATH=${MODEL_PATH:-"${upload_zyz}/${MODEL}"} # TODO
 EXP_BASENAME=${EXP_BASENAME:-"VERL090_MTP_${DATE}_${UNIFY_STRATEGY}-${OFFLINE_LOSS_TYPE}-${SFT_LOSS_COEF}_gate@${SWITCH_GATE}_${MODEL}_lr@${LR}_${TIME_TAG}"}
 
-OUTPUT_PATH=${OUTPUT_PATH:-${zlt_data}/qwen25_math_7b/HPT}
-EXP_NAME="${OUTPUT_PATH}/${EXP_BASENAME}" # OUTPUT_PATH
-
-
-LOG_PATH=${LOG_PATH:-${EXP_NAME}/}
-
-
+OUTPUT_PATH=${OUTPUT_PATH:-${BASE_PATH}/runs/hpt}
+EXP_NAME="${OUTPUT_PATH}/${EXP_BASENAME}"
+DEFAULT_LOCAL_DIR=${DEFAULT_LOCAL_DIR:-${EXP_NAME}/checkpoint}
+LOG_PATH=${LOG_PATH:-${EXP_NAME}/log}
 export TENSORBOARD_DIR="${EXP_NAME}/tensorboard"
+mkdir -p "${DEFAULT_LOCAL_DIR}" "${LOG_PATH}" "${TENSORBOARD_DIR}"
 
-mkdir -p \
-    "${EXP_NAME}" \
-    "${TENSORBOARD_DIR}"
-
-exec > >(tee -a "${EXP_NAME}/train.log") 2>&1
+exec > >(tee -a "${LOG_PATH}/train.log") 2>&1
 
 printf '\n===== restart %s =====\n' "$(date '+%Y-%m-%d %H:%M:%S')"
 
@@ -231,7 +214,7 @@ if [ "${NODE_RANK}" = "0" ]; then
             mkdir -p ${LOG_PATH}
 
             cd hpt/verl/
-            
+
             python3 -m verl.trainer.main_ppo \
                 algorithm.adv_estimator=grpo \
                 algorithm.norm_adv_by_std_in_grpo=False \
@@ -310,7 +293,7 @@ if [ "${NODE_RANK}" = "0" ]; then
                 trainer.max_actor_ckpt_to_keep=2 \
                 data.shuffle=True \
                 trainer.total_epochs=1 \
-                trainer.default_local_dir=$EXP_NAME/checkpoints \
+                trainer.default_local_dir=${DEFAULT_LOCAL_DIR} \
                 trainer.resume_mode=auto 2>&1 | tee -a ${LOG_PATH}/${SAVELOG_FILE_NAME}
             python_exit_code=${PIPESTATUS[0]}
             if [ "${python_exit_code}" -ne 0 ]; then

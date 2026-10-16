@@ -51,7 +51,7 @@ bash examples/hpt_eval/merge_checkpoints.sh
 SFT_MODEL_PATH="${zlt_data}/eval_models/qwen35b_sft_hf" \
 DFT_MODEL_PATH="${zlt_data}/eval_models/qwen35b_dft_hf" \
 GRPO_MODEL_PATH="${zlt_data}/eval_models/qwen35b_grpo_hf" \
-OUTPUT_ROOT="${zlt_data}/evaluation/qwen35b_table2" \
+OUTPUT_ROOT="${zlt_data}/runs/eval_result/qwen35b_table2" \
 bash examples/hpt_eval/run_table2_mtp.sh
 ```
 
@@ -66,7 +66,7 @@ script; override `PYPI_INDEX_URL` when needed.
 
 Each stage directory contains:
 
-- `generated/avg32.parquet` and `generated/avg1.parquet`: raw server outputs,
+- `generated/avg32.json` and `generated/avg1.json`: raw server outputs,
   including exact prompt/response token counts and finish reasons.
 - `rollouts.jsonl`: one durable record per rollout, with answer, reward, token
   counts, format validity, and truncation flag.
@@ -80,5 +80,5 @@ The final `report/` directory contains:
   SFT/DFT/GRPO stage.
 - `all_benchmark_summary.csv`: all detailed benchmark rows.
 
-Existing generation parquet files are reused by default. Set
+Existing generation JSON files are reused by default. Set
 `RESUME_GENERATION=0` to sample them again.

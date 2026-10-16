@@ -159,7 +159,7 @@ generate_group() {
     files_json=$(json_array "${files[@]}")
 
     if [[ "${RESUME_GENERATION}" == "1" && -s "${output_path}" ]]; then
-        echo "Reuse existing rollout parquet: ${output_path}"
+        echo "Reuse existing rollout JSON: ${output_path}"
         return
     fi
 
@@ -200,13 +200,13 @@ evaluate_stage() {
     fi
 
     # Paper protocol: avg@32 for contest sets; avg@1 for the remaining sets.
-    generate_group "${stage}" "${model_path}" 32 "${generated_dir}/avg32.parquet" "${AVG32_FILES[@]}"
-    generate_group "${stage}" "${model_path}" 1 "${generated_dir}/avg1.parquet" "${AVG1_FILES[@]}"
+    generate_group "${stage}" "${model_path}" 32 "${generated_dir}/avg32.json" "${AVG32_FILES[@]}"
+    generate_group "${stage}" "${model_path}" 1 "${generated_dir}/avg1.json" "${AVG1_FILES[@]}"
 
     python3 -m verl.experimental.hpt.table2_eval score \
         --stage "${stage}" \
-        --input "${generated_dir}/avg32.parquet" \
-        --input "${generated_dir}/avg1.parquet" \
+        --input "${generated_dir}/avg32.json" \
+        --input "${generated_dir}/avg1.json" \
         --output-dir "${stage_dir}" \
         --workers "${SCORER_WORKERS}" \
         --max-response-tokens "${MAX_RESPONSE_LENGTH}"

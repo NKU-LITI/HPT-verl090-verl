@@ -1,5 +1,16 @@
 # Group Relative Policy Optimization (GRPO)
 
+## Local GRPO/HPT run outputs
+
+The `zlt_run_grpo_*` and `zlt_run_hpt_*` scripts place each experiment under
+`${BASE_PATH}/runs/grpo/<experiment>/` or `${BASE_PATH}/runs/hpt/<experiment>/`.
+As in `zlt_sft.sh`, each run keeps `checkpoint/`, `log/`, and `tensorboard/`
+together. Scripts that save rollout data use `rollout/` in the same directory.
+`BASE_PATH` defaults to `${zlt_data}`. The existing `DEFAULT_LOCAL_DIR`,
+`LOG_PATH`, and `ROLLOUT_DATA_DIR` overrides still apply.
+The directory name uses `EXPERIMENT_NAME` when set, otherwise `PROJECT_NAME`;
+the Qwen2.5 HPT script uses `EXP_BASENAME`.
+
 In reinforcement learning, classic algorithms like PPO rely on a "critic" model to estimate the value of actions, guiding the learning process. However, training this critic model can be resource-intensive.
 
 GRPO simplifies this process by eliminating the need for a separate critic model. Instead, it operates as follows:

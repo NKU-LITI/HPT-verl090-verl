@@ -92,7 +92,8 @@ python -c "import accelerate; print(accelerate.__version__)"
 
 # ========================================================================
 
-PROJECT_NAME=${PROJECT_NAME:-VERL090_MTP_${DATE}_GRPO_Qwen25-math-7B_lr@${LR}_${TIME_TAG}}_${TIMESTAMP}}
+TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
+PROJECT_NAME=${PROJECT_NAME:-VERL090_MTP_${DATE}_GRPO_Qwen25-math-7B_lr@${LR}_${TIME_TAG}_${TIMESTAMP}}
 
 MODEL=${MODEL:-Qwen2.5-Math-7B} # Qwen2.5-Math-7B-16k
 MODEL_PATH=${MODEL_PATH:-"${upload_zyz}/${MODEL}"}
@@ -102,8 +103,8 @@ EXPERIMENT_NAME=${EXPERIMENT_NAME}
 
 
 # ================= TensorBoard 输出目录（带时间戳） =================
-TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
-TENSORBOARD_DIR="${BASE_PATH}/${PROJECT_NAME}/tensorboard/"
+RUN_DIR=${BASE_PATH}/runs/grpo/${EXPERIMENT_NAME:-${PROJECT_NAME}}
+TENSORBOARD_DIR="${RUN_DIR}/tensorboard"
 mkdir -p "${TENSORBOARD_DIR}"
 echo "TENSORBOARD_DIR = ${TENSORBOARD_DIR}"
 # ====================================================================
@@ -144,9 +145,9 @@ ROLLOUT_N=${ROLLOUT_N:-8}
 ROLLOUT_TEMPERATURE=${ROLLOUT_TEMPERATURE:-1.0}
 ROLLOUT_TOP_P=${ROLLOUT_TOP_P:-0.99}
 
-DEFAULT_LOCAL_DIR=${DEFAULT_LOCAL_DIR:-${BASE_PATH}/${PROJECT_NAME}/ckpt/}
+DEFAULT_LOCAL_DIR=${DEFAULT_LOCAL_DIR:-${RUN_DIR}/checkpoint}
 
-LOG_PATH=${LOG_PATH:-${BASE_PATH}/${PROJECT_NAME}/log/}
+LOG_PATH=${LOG_PATH:-${RUN_DIR}/log}
 echo "LOG_PATH resolved to: ${LOG_PATH}"
 
 

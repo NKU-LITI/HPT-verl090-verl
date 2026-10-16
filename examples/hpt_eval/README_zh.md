@@ -120,7 +120,7 @@ GRPO 训练相同的节点数和每节点 8 张 910B。以下环境变量可以�
 SFT_MODEL_PATH="${zlt_data}/eval_models/qwen35b_sft_hf" \
 DFT_MODEL_PATH="${zlt_data}/eval_models/qwen35b_dft_hf" \
 GRPO_MODEL_PATH="${zlt_data}/eval_models/qwen35b_grpo_hf" \
-OUTPUT_ROOT="${zlt_data}/evaluation/qwen35b_table2" \
+OUTPUT_ROOT="${zlt_data}/runs/eval_result/qwen35b_table2" \
 bash examples/hpt_eval/run_table2_mtp.sh
 ```
 
@@ -147,7 +147,7 @@ DFT 是额外对照行，不是原论文 Table 2 中的模型行。
 
 ## 5. 断点续跑
 
-默认 `RESUME_GENERATION=1`。若某阶段的生成 parquet 已存在且非空，脚本会
+默认 `RESUME_GENERATION=1`。若某阶段的生成 JSON 已存在且非空，脚本会
 复用它，然后重新执行打分与汇总。作业中断后使用完全相同的
 `OUTPUT_ROOT` 重跑即可：
 
@@ -171,7 +171,7 @@ bash examples/hpt_eval/run_table2_mtp.sh
 
 每个阶段（`SFT`、`DFT`、`GRPO`，可选 `HPT`）目录包含：
 
-- `generated/avg32.parquet`、`generated/avg1.parquet`：原始批量生成结果；
+- `generated/avg32.json`、`generated/avg1.json`：原始批量生成结果；
 - `rollouts.jsonl`：每条 rollout 的回答、reward、token 数、finish reason、
   格式是否合法及是否截断；
 - `benchmark_summary.csv`：逐 benchmark 的准确率、token 分布、格式率和

@@ -1,7 +1,9 @@
+import json
+
 import numpy as np
 
 from verl.experimental.hpt import table2_eval
-from verl.experimental.hpt.table2_eval import infer_benchmark, score_rollouts, summarize_benchmark
+from verl.experimental.hpt.table2_eval import infer_benchmark, load_generated_rollouts, score_rollouts, summarize_benchmark
 
 
 def _row(uid, score, tokens, truncated=False):
@@ -21,6 +23,36 @@ def test_infer_benchmark_prefers_source_path():
     assert infer_benchmark("math", "/data/HPT_data/AIME25/test.parquet") == "AIME25"
     assert infer_benchmark("math", "/data/HPT_data/MATH-500/test.parquet") == "MATH-500"
     assert infer_benchmark("arc_challenge", "/unknown/test.parquet") == "ARC-c"
+
+
+def test_load_generated_json_preserves_samples_and_metadata(tmp_path):
+    path = tmp_path / "avg32.json"
+    path.write_text(
+        json.dumps(
+            [
+                {
+                    "uid": "problem-1",
+                    "__source_file__": "/data/AIME25/test.parquet",
+                    "data_source": "math",
+                    "prompt": [{"role": "user", "content": "1 + 1?"}],
+                    "reward_model": {"ground_truth": "2"},
+                    "responses": ["2", "3"],
+                    "response_token_counts": [12, 32],
+                    "finish_reasons": ["stop", "length"],
+                    "generation_max_tokens": 32,
+                }
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    rows = load_generated_rollouts([path], "SFT", fallback_max_tokens=8192)
+
+    assert [row["response"] for row in rows] == ["2", "3"]
+    assert [row["sample_index"] for row in rows] == [0, 1]
+    assert [row["truncated"] for row in rows] == [False, True]
+    assert all(row["benchmark"] == "AIME25" and row["ground_truth"] == "2" for row in rows)
 
 
 def test_summary_uses_prompt_level_avg_at_n_and_token_counts():
