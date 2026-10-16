@@ -43,6 +43,7 @@ from verl.trainer.config import AlgoConfig
 from verl.trainer.distillation.losses import is_distillation_enabled
 from verl.trainer.ppo import core_algos
 from verl.trainer.ppo.core_algos import AdvantageEstimator, agg_loss
+from verl.trainer.ppo.grpo_metrics import compute_grpo_rollout_metrics
 from verl.trainer.ppo.metric_utils import (
     compute_data_metrics,
     compute_throughout_metrics,
@@ -1724,6 +1725,15 @@ class RayPPOTrainer:
 
                         # extract reward_tensor and reward_extra_infos_dict for training
                         reward_tensor, reward_extra_infos_dict = extract_reward(batch)
+
+                    if not hpt_enabled and self.config.algorithm.adv_estimator == AdvantageEstimator.GRPO:
+                        metrics.update(
+                            compute_grpo_rollout_metrics(
+                                batch,
+                                reward_tensor,
+                                config=hpt_config,
+                            )
+                        )
 
                     if hpt_enabled:
                         if self.use_critic:

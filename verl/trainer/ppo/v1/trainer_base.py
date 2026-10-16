@@ -50,6 +50,7 @@ from verl.single_controller.ray import (
 from verl.trainer.distillation import is_distillation_enabled
 from verl.trainer.ppo import core_algos
 from verl.trainer.ppo.core_algos import agg_loss
+from verl.trainer.ppo.grpo_metrics import compute_grpo_rollout_metrics
 from verl.trainer.ppo.metric_utils import (
     RolloutMoELoadBalanceMetricsAccumulator,
     compute_data_metrics,
@@ -1714,6 +1715,7 @@ class PPOTrainer(ABC):
         # 1. collect necessary fields from TransferQueue for computing metrics
         non_padding_mask = np.array([not tag.get("is_padding", False) for tag in batch.tags], dtype=bool)
         fields = [
+            "uid",
             "prompts",
             "responses",
             "response_mask",
@@ -1761,13 +1763,18 @@ class PPOTrainer(ABC):
                 spec_accepts = [extra_field["spec_num_accepted_tokens"] for extra_field in extra_fields]
                 spec_verifies = [extra_field["spec_num_verify_steps"] for extra_field in extra_fields]
 
+        uids = np.array(data.pop("uid").tolist(), dtype=object)
         data = data.to_padded_tensor()
         data["token_level_scores"] = data["rm_scores"]
         if "token_level_rewards" not in data:
             data["token_level_rewards"] = data["rm_scores"]
         data["prompt_length"] = prompt_length.float()
         data["response_length"] = response_length.float()
-        batch = DataProto(batch=data, meta_info={"global_token_num": global_token_num})
+        batch = DataProto(
+            batch=data,
+            non_tensor_batch={"uid": uids},
+            meta_info={"global_token_num": global_token_num},
+        )
         metrics_batch = batch.select_idxs(non_padding_mask) if non_padding_mask.any() else batch
 
         # 2. compute metrics
@@ -1781,6 +1788,14 @@ class PPOTrainer(ABC):
             )
         )
         metrics.update(compute_data_metrics(batch=metrics_batch, use_critic=self.use_critic))
+        if non_padding_mask.any() and self.config.algorithm.adv_estimator == core_algos.AdvantageEstimator.GRPO:
+            metrics.update(
+                compute_grpo_rollout_metrics(
+                    metrics_batch,
+                    metrics_batch.batch["token_level_scores"],
+                    config=self.config.get("hpt", None),
+                )
+            )
         metrics.update(compute_timing_metrics(batch=batch, timing_raw=timing_raw))
         n_gpus = self._get_n_gpus_for_throughput()
         metrics.update(compute_throughout_metrics(batch=batch, timing_raw=timing_raw, n_gpus=n_gpus))
